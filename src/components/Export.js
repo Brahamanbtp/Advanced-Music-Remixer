@@ -4,17 +4,17 @@ import * as Tone from 'tone';
 const Export = ({ tracks }) => {
   const exportProject = async () => {
     const duration = Tone.Transport.seconds;
-    const offlineContext = new OfflineAudioContext(2, duration * 44100, 44100);
-    const renderer = new Tone.OfflineRenderer(offlineContext);
 
-    // Connect all tracks to the offline context
-    tracks.forEach(track => {
-      track.synth.connect(offlineContext.destination);
-    });
+    // Render offline
+    const buffer = await Tone.Offline(({ transport }) => {
+      tracks.forEach(track => {
+        track.synth.toDestination();
+      });
+      transport.start();
+    }, duration);
 
-    await renderer.render();
-    const wav = renderer.toWave();
-
+    // Convert buffer to WAV
+    const wav = buffer.get();
     const blob = new Blob([wav], { type: 'audio/wav' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

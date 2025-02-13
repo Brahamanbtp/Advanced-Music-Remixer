@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Tone from 'tone';
 import { AudioProvider } from './contexts/AudioContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { CollaborationProvider } from './contexts/CollaborationContext';
