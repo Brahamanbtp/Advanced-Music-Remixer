@@ -5,22 +5,30 @@ const TransportControls = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(120);
   const [loop, setLoop] = useState(false);
-  const [position, setPosition] = useState(0);
+  const [position, setPosition] = useState("0:0:0"); // Default Tone.js format
 
   useEffect(() => {
     const syncPosition = () => {
       setPosition(Tone.Transport.position);
     };
 
-    Tone.Transport.on('time', syncPosition);
+    // Ensure AudioContext starts only after user interaction
+    const startAudioContext = async () => {
+      await Tone.start();
+      console.log("AudioContext started!");
+    };
+
+    document.body.addEventListener("click", startAudioContext, { once: true });
+
+    Tone.Transport.on('transport', syncPosition);
 
     return () => {
-      Tone.Transport.off('time', syncPosition);
+      Tone.Transport.off('transport', syncPosition);
     };
   }, []);
 
-  const start = () => {
-    Tone.start();
+  const start = async () => {
+    await Tone.start(); // Ensures AudioContext is started properly
     Tone.Transport.start();
     setIsPlaying(true);
   };
@@ -36,13 +44,13 @@ const TransportControls = () => {
   };
 
   const setBpmValue = (value) => {
-    Tone.Transport.bpm.value = value;
+    Tone.Transport.bpm.value = parseFloat(value);
     setBpm(value);
   };
 
   const rewind = () => {
-    Tone.Transport.position = 0;
-    setPosition(0);
+    Tone.Transport.position = "0:0:0";
+    setPosition("0:0:0");
   };
 
   return (
@@ -61,7 +69,7 @@ const TransportControls = () => {
         />
       </label>
       <div className="position-display">
-        Position: {position.toFixed(2)}
+        Position: {position}
       </div>
     </div>
   );
