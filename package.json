@@ -5,19 +5,22 @@
   "homepage": ".",
   "dependencies": {
     "cra-template": "1.2.0",
-    "react": "^19.0.0",
+    "react": "^18.2.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": "^19.0.0",
-    "react-scripts": "^3.0.1",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1",
     "socket.io-client": "^4.8.1",
     "tone": "^15.0.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build",
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   },
   "eslintConfig": {
     "extends": [
