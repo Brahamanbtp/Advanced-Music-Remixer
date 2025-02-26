@@ -1,20 +1,27 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // Create a context for managing project-related state
 export const ProjectContext = createContext();
 
 // Create a provider component to manage project state
 export const ProjectProvider = ({ children }) => {
-  const [project, setProject] = useState({});
+  const [project, setProject] = useState(() => {
+    // Initialize state from local storage if available
+    const savedProject = localStorage.getItem('musicProject');
+    return savedProject ? JSON.parse(savedProject) : {};
+  });
 
   // Function to save the current project state
   const saveProject = (data) => {
     setProject(data);
-    // Save to local storage or backend
-    localStorage.setItem('musicProject', JSON.stringify(data));
+    try {
+      localStorage.setItem('musicProject', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error saving project to local storage:', error);
+    }
   };
 
-  // Function to load a project from local storage or backend
+  // Function to load a project from local storage
   const loadProject = () => {
     const savedProject = localStorage.getItem('musicProject');
     if (savedProject) {
@@ -24,13 +31,19 @@ export const ProjectProvider = ({ children }) => {
 
   // Function to update the project state
   const updateProject = (updatedData) => {
-    setProject((prevProject) => ({
-      ...prevProject,
-      ...updatedData,
-    }));
-    // Optionally, save the updated project to local storage or backend
-    localStorage.setItem('musicProject', JSON.stringify({ ...project, ...updatedData }));
+    const newProject = { ...project, ...updatedData };
+    setProject(newProject);
+    try {
+      localStorage.setItem('musicProject', JSON.stringify(newProject));
+    } catch (error) {
+      console.error('Error updating project in local storage:', error);
+    }
   };
+
+  // Load project from local storage on mount
+  useEffect(() => {
+    loadProject();
+  }, []);
 
   return (
     <ProjectContext.Provider value={{ project, saveProject, loadProject, updateProject }}>
@@ -41,5 +54,9 @@ export const ProjectProvider = ({ children }) => {
 
 // Custom hook to use the ProjectContext
 export const useProject = () => {
-  return useContext(ProjectContext);
+  const context = useContext(ProjectContext);
+  if (!context) {
+    throw new Error('useProject must be used within a ProjectProvider');
+  }
+  return context;
 };
