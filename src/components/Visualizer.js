@@ -1,14 +1,25 @@
 import React, { useRef, useEffect } from 'react';
 import * as Tone from 'tone';
+import { useAudio } from '../contexts/AudioContext'; // Correct path to AudioContext
 
 const Visualizer = ({ audioBuffer }) => {
   const canvasRef = useRef(null);
+  const { startAudioContext } = useAudio();
 
   useEffect(() => {
+    // Ensure AudioContext is started
+    startAudioContext();
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
+
+    if (!audioBuffer) {
+      console.error('Audio buffer is not provided.');
+      return;
+    }
+
     const data = audioBuffer.getChannelData(0);
     const bufferLength = data.length;
 
@@ -79,7 +90,7 @@ const Visualizer = ({ audioBuffer }) => {
 
     drawWaveform();
     drawSpectrogram();
-  }, [audioBuffer]);
+  }, [audioBuffer, startAudioContext]);
 
   return (
     <div className="visualizer">
