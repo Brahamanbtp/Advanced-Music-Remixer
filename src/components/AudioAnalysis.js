@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as Tone from 'tone';
 
 const AudioAnalysis = ({ audioBuffer }) => {
   const canvasRef = useRef(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,16 +41,33 @@ const AudioAnalysis = ({ audioBuffer }) => {
       ctx.lineTo(canvas.width, canvas.height / 2);
       ctx.stroke();
 
-      requestAnimationFrame(draw);
+      if (isAnalyzing) {
+        requestAnimationFrame(draw);
+      }
     };
 
-    draw();
-  }, [audioBuffer]);
+    if (audioBuffer) {
+      const source = Tone.context.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(analyser);
+      analyser.connect(Tone.context.destination);
+      source.start();
+      setIsAnalyzing(true);
+      draw();
+    }
+
+    return () => {
+      setIsAnalyzing(false);
+    };
+  }, [audioBuffer, isAnalyzing]);
 
   return (
     <div className="audio-analysis">
       <h4>Audio Analysis</h4>
       <canvas ref={canvasRef} width={500} height={200} />
+      <button onClick={() => setIsAnalyzing(!isAnalyzing)}>
+        {isAnalyzing ? 'Stop Analysis' : 'Start Analysis'}
+      </button>
     </div>
   );
 };
