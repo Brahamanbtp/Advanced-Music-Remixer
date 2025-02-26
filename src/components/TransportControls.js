@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import * as Tone from 'tone';
+import { useAudio } from '../contexts/AudioContext';
 
 const TransportControls = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(120);
   const [loop, setLoop] = useState(false);
   const [position, setPosition] = useState("0:0:0"); // Default Tone.js format
+  const { startAudioContext } = useAudio();
 
   useEffect(() => {
     const syncPosition = () => {
@@ -13,19 +15,20 @@ const TransportControls = () => {
     };
 
     // Ensure AudioContext starts only after user interaction
-    const startAudioContext = async () => {
+    const handleStartAudioContext = async () => {
+      startAudioContext();
       await Tone.start();
       console.log("AudioContext started!");
     };
 
-    document.body.addEventListener("click", startAudioContext, { once: true });
+    document.body.addEventListener("click", handleStartAudioContext, { once: true });
 
     Tone.Transport.on('transport', syncPosition);
 
     return () => {
       Tone.Transport.off('transport', syncPosition);
     };
-  }, []);
+  }, [startAudioContext]);
 
   const start = async () => {
     await Tone.start(); // Ensures AudioContext is started properly
