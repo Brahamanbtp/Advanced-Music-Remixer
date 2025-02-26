@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useRef } from 'react';
+import React, { createContext, useState, useContext, useRef, useEffect } from 'react';
 
 // Create a context for managing audio-related state
 export const AudioContext = createContext();
@@ -6,15 +6,25 @@ export const AudioContext = createContext();
 // Create a provider component to manage audio state
 export const AudioProvider = ({ children }) => {
   const [automation, setAutomation] = useState([]);
+  const [isAudioReady, setIsAudioReady] = useState(false);
   const audioContextRef = useRef(null);
 
   // Function to initialize or resume the AudioContext
-  const startAudioContext = () => {
+  const startAudioContext = async () => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      try {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        setIsAudioReady(true);
+      } catch (error) {
+        console.error('Error initializing AudioContext:', error);
+      }
     }
     if (audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
+      try {
+        await audioContextRef.current.resume();
+      } catch (error) {
+        console.error('Error resuming AudioContext:', error);
+      }
     }
   };
 
@@ -26,8 +36,22 @@ export const AudioProvider = ({ children }) => {
     ]);
   };
 
+  // Effect to handle AudioContext suspension on page visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && audioContextRef.current) {
+        startAudioContext();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   return (
-    <AudioContext.Provider value={{ automation, addAutomationPoint, startAudioContext }}>
+    <AudioContext.Provider value={{ automation, addAutomationPoint, startAudioContext, isAudioReady }}>
       {children}
     </AudioContext.Provider>
   );
@@ -35,5 +59,9 @@ export const AudioProvider = ({ children }) => {
 
 // Custom hook to use the AudioContext
 export const useAudio = () => {
-  return useContext(AudioContext);
+  const context = useContext(AudioContext);
+  if (!context) {
+    throw new Error('useAudio must be used within an AudioProvider');
+  }
+  return context;
 };
