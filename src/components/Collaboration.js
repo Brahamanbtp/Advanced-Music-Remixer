@@ -1,9 +1,11 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { CollaborationContext } from '../contexts/CollaborationContext';
+import debounce from 'lodash.debounce';
 
 const Collaboration = () => {
   const { users, projectData, updateProject } = useContext(CollaborationContext);
   const [localChanges, setLocalChanges] = useState({});
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     // Sync local changes with the project data from the server
@@ -18,9 +20,34 @@ const Collaboration = () => {
     }));
   };
 
-  const syncProjectWithServer = () => {
-    updateProject(localChanges);
-  };
+  const syncProjectWithServer = useCallback(
+    async (changes) => {
+      if (isSyncing) return;
+      setIsSyncing(true);
+      try {
+        await updateProject(changes);
+        console.log('Project synced successfully');
+      } catch (error) {
+        console.error('Error syncing project:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [isSyncing, updateProject]
+  );
+
+  useEffect(() => {
+    // Debounce function created inside useEffect to prevent re-creating on every render
+    const debouncedSync = debounce((changes) => {
+      syncProjectWithServer(changes);
+    }, 500);
+
+    debouncedSync(localChanges);
+
+    return () => {
+      debouncedSync.cancel();
+    };
+  }, [localChanges, syncProjectWithServer]);
 
   return (
     <div className="collaboration">
@@ -49,7 +76,9 @@ const Collaboration = () => {
           </div>
         ))}
       </div>
-      <button onClick={syncProjectWithServer}>Sync Project</button>
+      <button onClick={() => syncProjectWithServer(localChanges)} disabled={isSyncing}>
+        {isSyncing ? 'Syncing...' : 'Sync Project'}
+      </button>
     </div>
   );
 };
