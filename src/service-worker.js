@@ -10,12 +10,14 @@ const urlsToCache = [
 
 // Install a service worker
 self.addEventListener('install', event => {
-  // Perform install steps
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
+        console.log('Cache opened');
         return cache.addAll(urlsToCache);
+      })
+      .catch(error => {
+        console.error('Failed to cache assets:', error);
       })
   );
 });
@@ -30,8 +32,14 @@ self.addEventListener('fetch', event => {
           return response;
         }
         return fetch(event.request);
-      }
-    )
+      })
+      .catch(error => {
+        console.error('Fetching failed:', error);
+        return new Response('Network error occurred', {
+          status: 408,
+          statusText: 'Request Timeout',
+        });
+      })
   );
 });
 
@@ -43,10 +51,21 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log(`Deleting outdated cache: ${cacheName}`);
             return caches.delete(cacheName);
           }
         })
       );
     })
+    .catch(error => {
+      console.error('Failed to delete old caches:', error);
+    })
   );
+});
+
+// Listen for messages from the client
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
