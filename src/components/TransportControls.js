@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as Tone from 'tone';
 import { useAudio } from '../contexts/AudioContext';
 
@@ -9,12 +9,11 @@ const TransportControls = () => {
   const [position, setPosition] = useState("0:0:0"); // Default Tone.js format
   const { startAudioContext } = useAudio();
 
-  useEffect(() => {
-    const syncPosition = () => {
-      setPosition(Tone.Transport.position);
-    };
+  const syncPosition = useCallback(() => {
+    setPosition(Tone.Transport.position);
+  }, []);
 
-    // Ensure AudioContext starts only after user interaction
+  useEffect(() => {
     const handleStartAudioContext = async () => {
       startAudioContext();
       await Tone.start();
@@ -28,7 +27,7 @@ const TransportControls = () => {
     return () => {
       Tone.Transport.off('transport', syncPosition);
     };
-  }, [startAudioContext]);
+  }, [startAudioContext, syncPosition]);
 
   const start = async () => {
     await Tone.start(); // Ensures AudioContext is started properly
@@ -56,11 +55,21 @@ const TransportControls = () => {
     setPosition("0:0:0");
   };
 
+  const tapTempo = () => {
+    const currentTime = Tone.now();
+    const lastTapTime = Tone.Transport.tapTempo(currentTime);
+    if (lastTapTime !== null) {
+      const newBpm = 60 / ((currentTime - lastTapTime) / 1000);
+      setBpmValue(newBpm.toFixed(2));
+    }
+  };
+
   return (
     <div className="transport-controls">
       <button onClick={isPlaying ? stop : start}>{isPlaying ? 'Stop' : 'Play'}</button>
       <button onClick={rewind}>Rewind</button>
       <button onClick={toggleLoop}>{loop ? 'Loop Off' : 'Loop On'}</button>
+      <button onClick={tapTempo}>Tap Tempo</button>
       <label>
         BPM
         <input
