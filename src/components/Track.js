@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import * as Tone from 'tone';
 import { AudioContext } from '../contexts/AudioContext';
 import PianoRoll from './PianoRoll';
@@ -12,19 +12,22 @@ const Track = ({ name, synth, reverb, delay }) => {
   const [recordedSequence, setRecordedSequence] = useState([]);
   const [audioBuffer, setAudioBuffer] = useState(null);
 
+  const loopCallback = useCallback((time) => {
+    sequence.forEach((note, index) => {
+      synth.triggerAttackRelease(note, '8n', time + index * 0.5);
+    });
+  }, [sequence, synth]);
+
   useEffect(() => {
-    const loop = new Tone.Loop((time) => {
-      sequence.forEach((note, index) => {
-        synth.triggerAttackRelease(note, '8n', time + index * 0.5);
-      });
-    }, '1m').start(0);
+    const loop = new Tone.Loop(loopCallback, '1m');
+    loop.start(0);
 
     Tone.Transport.start();
 
     return () => {
       loop.dispose();
     };
-  }, [sequence, synth]);
+  }, [loopCallback]);
 
   useEffect(() => {
     if (recording) {
@@ -57,11 +60,7 @@ const Track = ({ name, synth, reverb, delay }) => {
   }, [recording]);
 
   const toggleEffect = (effect) => {
-    if (effect.wet.value) {
-      effect.wet.value = 0;
-    } else {
-      effect.wet.value = 1;
-    }
+    effect.wet.value = effect.wet.value === 1 ? 0 : 1;
   };
 
   const toggleRecording = () => {
