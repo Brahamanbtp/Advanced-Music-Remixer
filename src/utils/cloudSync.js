@@ -4,11 +4,11 @@ import { db } from '../firebase'; // Assuming Firebase is used for cloud storage
 export const syncProjectToCloud = async (projectData) => {
   try {
     const docRef = await db.collection('projects').add(projectData);
-    console.log('Project saved to cloud with ID: ', docRef.id);
+    console.log('Project saved to cloud with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
     console.error('Error saving project to cloud:', error);
-    throw error;
+    throw new Error('Failed to save project to the cloud.');
   }
 };
 
@@ -25,7 +25,7 @@ export const loadProjectFromCloud = async (projectId) => {
     }
   } catch (error) {
     console.error('Error loading project from cloud:', error);
-    throw error;
+    throw new Error('Failed to load project from the cloud.');
   }
 };
 
@@ -33,10 +33,10 @@ export const loadProjectFromCloud = async (projectId) => {
 export const updateProjectInCloud = async (projectId, updatedData) => {
   try {
     await db.collection('projects').doc(projectId).update(updatedData);
-    console.log('Project updated in cloud with ID: ', projectId);
+    console.log('Project updated in cloud with ID:', projectId);
   } catch (error) {
     console.error('Error updating project in cloud:', error);
-    throw error;
+    throw new Error('Failed to update project in the cloud.');
   }
 };
 
@@ -44,9 +44,25 @@ export const updateProjectInCloud = async (projectId, updatedData) => {
 export const deleteProjectFromCloud = async (projectId) => {
   try {
     await db.collection('projects').doc(projectId).delete();
-    console.log('Project deleted from cloud with ID: ', projectId);
+    console.log('Project deleted from cloud with ID:', projectId);
   } catch (error) {
     console.error('Error deleting project from cloud:', error);
-    throw error;
+    throw new Error('Failed to delete project from the cloud.');
+  }
+};
+
+// Function to batch update multiple projects in the cloud
+export const batchUpdateProjects = async (updates) => {
+  try {
+    const batch = db.batch();
+    updates.forEach(({ projectId, updatedData }) => {
+      const docRef = db.collection('projects').doc(projectId);
+      batch.update(docRef, updatedData);
+    });
+    await batch.commit();
+    console.log('Batch update completed successfully.');
+  } catch (error) {
+    console.error('Error performing batch update:', error);
+    throw new Error('Failed to perform batch update.');
   }
 };
