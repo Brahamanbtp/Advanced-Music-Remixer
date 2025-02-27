@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import * as Tone from 'tone';
-import { useAudio } from '../contexts/AudioContext'; // Correct path to AudioContext
+import { useAudio } from '../contexts/AudioContext';
 
 const Visualizer = ({ audioBuffer }) => {
   const canvasRef = useRef(null);
@@ -50,7 +50,6 @@ const Visualizer = ({ audioBuffer }) => {
     };
 
     const drawSpectrogram = () => {
-      ctx.clearRect(0, 0, width, height);
       const analyser = Tone.context.createAnalyser();
       analyser.fftSize = 2048;
       const bufferLength = analyser.frequencyBinCount;
@@ -90,12 +89,16 @@ const Visualizer = ({ audioBuffer }) => {
 
     drawWaveform();
     drawSpectrogram();
+
+    return () => {
+      ctx.clearRect(0, 0, width, height);
+    };
   }, [audioBuffer, startAudioContext]);
 
   return (
     <div className="visualizer">
       <h4>Audio Visualizer</h4>
-      <canvas ref={canvasRef} width={500} height={200} />
+      <canvas ref={canvasRef} width={800} height={300} />
     </div>
   );
 };
