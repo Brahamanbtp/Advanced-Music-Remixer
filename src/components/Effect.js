@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as Tone from 'tone';
 
 const Effect = ({ effectType, track }) => {
   const [effect, setEffect] = useState(null);
   const [wetValue, setWetValue] = useState(0);
   const [parameters, setParameters] = useState({});
+  const [preset, setPreset] = useState('default');
 
-  useEffect(() => {
+  const createEffect = useCallback((type) => {
     let newEffect;
-    switch (effectType) {
+    switch (type) {
       case 'reverb':
         newEffect = new Tone.Reverb({
           wet: wetValue,
+          decay: 1.5,
+          preDelay: 0.01,
         }).toDestination();
         break;
       case 'delay':
@@ -25,6 +28,7 @@ const Effect = ({ effectType, track }) => {
         newEffect = new Tone.Distortion({
           wet: wetValue,
           distortion: 0.5,
+          oversample: 'none',
         }).toDestination();
         break;
       case 'chorus':
@@ -39,7 +43,11 @@ const Effect = ({ effectType, track }) => {
       default:
         newEffect = new Tone.Reverb().toDestination();
     }
+    return newEffect;
+  }, [wetValue]);
 
+  useEffect(() => {
+    const newEffect = createEffect(effectType);
     setEffect(newEffect);
     track.synth.connect(newEffect);
 
@@ -47,7 +55,7 @@ const Effect = ({ effectType, track }) => {
       newEffect.disconnect();
       newEffect.dispose();
     };
-  }, [effectType, track, wetValue]);
+  }, [effectType, track, createEffect]);
 
   useEffect(() => {
     if (effect) {
@@ -61,6 +69,19 @@ const Effect = ({ effectType, track }) => {
       effect.set({ [param]: value });
       setParameters((prevParams) => ({ ...prevParams, [param]: value }));
     }
+  };
+
+  const applyPreset = (presetName) => {
+    const presets = {
+      default: { wet: 0.5 },
+      intense: { wet: 0.8, feedback: 0.7, delayTime: '16n' },
+      subtle: { wet: 0.3, feedback: 0.3, delayTime: '4n' },
+    };
+    const presetValues = presets[presetName] || presets.default;
+    Object.entries(presetValues).forEach(([param, value]) => {
+      handleParameterChange(param, value);
+    });
+    setPreset(presetName);
   };
 
   return (
@@ -93,6 +114,19 @@ const Effect = ({ effectType, track }) => {
           />
         </label>
       ))}
+      <div>
+        <h5>Presets</h5>
+        <button onClick={() => applyPreset('default')} disabled={preset === 'default'}>
+          Default
+        </button>
+        <button onClick={() => applyPreset('intense')} disabled={preset === 'intense'}>
+          Intense
+        </button>
+        <button onClick={() => applyPreset('subtle')} disabled={preset === 'subtle'}>
+          Subtle
+        </button>
+        <p>Current Preset: {preset}</p>
+      </div>
     </div>
   );
 };
