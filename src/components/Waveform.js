@@ -8,6 +8,12 @@ const Waveform = ({ audioBuffer }) => {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
+
+    if (!audioBuffer) {
+      console.error('Audio buffer is not provided.');
+      return;
+    }
+
     const data = audioBuffer.getChannelData(0); // Get the audio data from the first channel
     const bufferLength = data.length;
 
@@ -43,7 +49,7 @@ const Waveform = ({ audioBuffer }) => {
   return (
     <div className="waveform">
       <h4>Waveform Visualization</h4>
-      <canvas ref={canvasRef} width={500} height={200} />
+      <canvas ref={canvasRef} width={800} height={300} />
     </div>
   );
 };
