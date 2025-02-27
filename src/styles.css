@@ -1,121 +1,186 @@
-/* Basic reset for margin and padding */
+/* 🌐 Next-Level styles.css - Enhanced UI, Glassmorphism & AI Theming */
+
+/* 🚀 Global Reset & Variables */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  /* Body styling */
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  
-  /* Main app container */
-  .app {
-    width: 100%;
-    max-width: 1200px;
-    margin: 20px;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-  }
-  
-  /* Header styling */
-  .app-header {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  
-  .app-header h1 {
-    font-size: 2em;
-    color: #444;
-  }
-  
-  /* Main content section */
-  main {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  
-  /* Controls section */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+:root {
+  --bg-color: #121212;
+  --card-bg: rgba(255, 255, 255, 0.1);
+  --border-color: rgba(255, 255, 255, 0.2);
+  --text-color: #f5f5f5;
+  --primary-color: #4A90E2;
+  --hover-color: #72baff;
+  --accent-color: #ff4081;
+  --transition-duration: 0.3s;
+  --border-radius: 16px;
+  --box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  --glass-blur: 20px;
+}
+
+/* 🎨 Body Styling */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  transition: background var(--transition-duration) ease-in-out;
+}
+
+/* 📦 Main App Container */
+.app {
+  width: 100%;
+  max-width: 1200px;
+  padding: 24px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  backdrop-filter: blur(var(--glass-blur));
+  transition: all var(--transition-duration) ease-in-out;
+}
+
+/* 🎭 Header Styling */
+.app-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 1s ease-in-out;
+}
+
+/* 🔧 Controls Section */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+/* 🛠️ Individual Component Styling */
+.component {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-duration) ease, background var(--transition-duration) ease;
+}
+
+.component:hover {
+  transform: translateY(-5px) scale(1.02);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 🎮 Buttons */
+button {
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color var(--transition-duration) ease, transform var(--transition-duration) ease;
+}
+
+button:hover {
+  background-color: var(--hover-color);
+  transform: translateY(-3px) scale(1.05);
+}
+
+button:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 4px;
+}
+
+/* 📩 Inputs */
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  transition: background var(--transition-duration) ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  background-color: rgba(255, 255, 255, 0.2);
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 768px) {
   .controls {
-    display: flex;
     flex-direction: column;
-    width: 100%;
+    align-items: center;
   }
-  
-  /* Individual component styling */
-  .transport-controls,
-  .mixer,
-  .sequencer,
-  .piano-roll,
-  .visualizer,
-  .automation,
-  .effect,
-  .collaboration,
-  .export,
-  .customization {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 🌀 GPU-Optimized Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
   }
-  
-  /* Button styling */
-  button {
-    background-color: #007bff;
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform, opacity;
+}
+
+/* 🎯 Accessibility - Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 🌟 AI-Inspired Theming */
+.ai-theme {
+  --primary-color: #ff6f61;
+  --hover-color: #ff9f80;
+  --accent-color: #6b5b95;
+  --bg-color: #1e1e2f;
+  --text-color: #f5f5f5;
+}
+
+/* 🌐 Internationalization & Localization */
+[lang="fr"] .app {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* 🔍 High Contrast Mode */
+@media (prefers-contrast: high) {
+  body {
+    background-color: #000;
     color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s;
   }
-  
-  button:hover {
-    background-color: #0056b3;
+  button {
+    background: #fff;
+    color: #000;
   }
-  
-  /* Input styling */
-  input[type="text"],
-  input[type="number"],
-  select {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
-  }
-  
-  /* Responsive design */
-  @media (max-width: 768px) {
-    .controls {
-      flex-direction: column;
-      align-items: center;
-    }
-  
-    .transport-controls,
-    .mixer,
-    .sequencer,
-    .piano-roll,
-    .visualizer,
-    .automation,
-    .effect,
-    .collaboration,
-    .export,
-    .customization {
-      width: 100%;
-    }
-  }
+}
