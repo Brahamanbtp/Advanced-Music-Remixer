@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as Tone from 'tone';
 
 const Spectrogram = ({ audioBuffer }) => {
   const canvasRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,16 +41,31 @@ const Spectrogram = ({ audioBuffer }) => {
       ctx.lineTo(canvas.width, canvas.height / 2);
       ctx.stroke();
 
-      requestAnimationFrame(drawSpectrogram);
+      if (isPlaying) {
+        requestAnimationFrame(drawSpectrogram);
+      }
     };
 
+    const source = Tone.context.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(analyser);
+    source.connect(Tone.context.destination);
+    source.start();
+
+    setIsPlaying(true);
     drawSpectrogram();
+
+    return () => {
+      source.stop();
+      source.disconnect();
+      setIsPlaying(false);
+    };
   }, [audioBuffer]);
 
   return (
     <div className="spectrogram">
       <h4>Spectrogram Visualization</h4>
-      <canvas ref={canvasRef} width={500} height={200} />
+      <canvas ref={canvasRef} width={800} height={300} />
     </div>
   );
 };
