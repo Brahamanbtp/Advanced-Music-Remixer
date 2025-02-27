@@ -1,10 +1,11 @@
-import React, { useRef, useEffect, useContext } from 'react';
-import { AudioContext } from '../contexts/AudioContext';
+import React, { useRef, useEffect, useState } from 'react';
+import { useAudio } from '../contexts/AudioContext';
 import * as Tone from 'tone';
 
 const Automation = ({ parameter }) => {
-  const { automation, addAutomationPoint } = useContext(AudioContext);
+  const { automation, addAutomationPoint } = useAudio();
   const canvasRef = useRef(null);
+  const [isAnimating, setIsAnimating] = useState(true);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,15 +34,19 @@ const Automation = ({ parameter }) => {
       ctx.stroke();
     };
 
-    drawAutomation();
-
     const animate = () => {
       drawAutomation();
-      requestAnimationFrame(animate);
+      if (isAnimating) {
+        requestAnimationFrame(animate);
+      }
     };
 
     animate();
-  }, [automation, parameter]);
+
+    return () => {
+      setIsAnimating(false);
+    };
+  }, [automation, parameter, isAnimating]);
 
   const handleAddAutomationPoint = () => {
     const time = Tone.now();
@@ -54,6 +59,9 @@ const Automation = ({ parameter }) => {
       <h4>Automation for {parameter}</h4>
       <canvas ref={canvasRef} width={500} height={100} />
       <button onClick={handleAddAutomationPoint}>Add Automation Point</button>
+      <button onClick={() => setIsAnimating(!isAnimating)}>
+        {isAnimating ? 'Pause Animation' : 'Resume Animation'}
+      </button>
     </div>
   );
 };
