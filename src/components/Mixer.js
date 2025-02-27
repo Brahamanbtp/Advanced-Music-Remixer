@@ -1,18 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Tone from 'tone';
 import Effect from './Effect';
 
 const Mixer = ({ tracks }) => {
   const [masterVolume, setMasterVolume] = useState(1);
   const [sendLevel, setSendLevel] = useState(0);
+  const [effectsBypassed, setEffectsBypassed] = useState({
+    reverb: false,
+    delay: false,
+  });
+
   const reverb = new Tone.Reverb().toDestination();
   const delay = new Tone.FeedbackDelay().toDestination();
 
+  useEffect(() => {
+    return () => {
+      reverb.disconnect();
+      delay.disconnect();
+      reverb.dispose();
+      delay.dispose();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const applySendEffect = (track) => {
-    track.synth.connect(reverb);
-    track.synth.connect(delay);
-    reverb.wet.value = sendLevel;
-    delay.wet.value = sendLevel;
+    if (!effectsBypassed.reverb) {
+      track.synth.connect(reverb);
+      reverb.wet.value = sendLevel;
+    }
+    if (!effectsBypassed.delay) {
+      track.synth.connect(delay);
+      delay.wet.value = sendLevel;
+    }
+  };
+
+  const toggleEffectBypass = (effect) => {
+    setEffectsBypassed((prev) => ({
+      ...prev,
+      [effect]: !prev[effect],
+    }));
   };
 
   return (
@@ -64,6 +90,14 @@ const Mixer = ({ tracks }) => {
             <Effect effectType="delay" track={track} />
             <Effect effectType="distortion" track={track} />
             <Effect effectType="chorus" track={track} />
+          </div>
+          <div className="effect-bypass">
+            <button onClick={() => toggleEffectBypass('reverb')}>
+              {effectsBypassed.reverb ? 'Enable' : 'Bypass'} Reverb
+            </button>
+            <button onClick={() => toggleEffectBypass('delay')}>
+              {effectsBypassed.delay ? 'Enable' : 'Bypass'} Delay
+            </button>
           </div>
         </div>
       ))}
