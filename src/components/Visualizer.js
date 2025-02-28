@@ -4,7 +4,7 @@ import { useAudio } from '../contexts/AudioContext';
 const Visualizer = ({ audioBuffer }) => {
   const canvasRef = useRef(null);
   const { startAudioContext } = useAudio();
-  const [isBufferLoaded, setIsBufferLoaded] = useState(false);
+  const [buffer, setBuffer] = useState(null);
 
   useEffect(() => {
     startAudioContext(); // Ensure the audio context starts
@@ -21,14 +21,19 @@ const Visualizer = ({ audioBuffer }) => {
       return;
     }
 
-    setIsBufferLoaded(true);
+    setBuffer(audioBuffer);
+  }, [audioBuffer, startAudioContext]);
+
+  useEffect(() => {
+    if (!buffer) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    const data = audioBuffer.getChannelData(0);
+    const data = buffer.getChannelData(0);
     const bufferLength = data.length;
 
     const drawWaveform = () => {
@@ -60,12 +65,12 @@ const Visualizer = ({ audioBuffer }) => {
     drawWaveform();
 
     return () => ctx.clearRect(0, 0, width, height);
-  }, [audioBuffer, startAudioContext]);
+  }, [buffer]);
 
   return (
     <div className="visualizer">
       <h4>Audio Visualizer</h4>
-      {!isBufferLoaded ? (
+      {!buffer ? (
         <p>Loading audio... Ensure an audio track is loaded.</p>
       ) : (
         <canvas ref={canvasRef} width={800} height={300} />
