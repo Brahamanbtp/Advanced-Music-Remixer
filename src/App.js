@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy } from 'react';
+import React, { useEffect, Suspense, lazy, useState } from 'react';
 import * as Tone from 'tone';
 import { AudioProvider } from './contexts/AudioContext';
 import { ProjectProvider } from './contexts/ProjectContext';
@@ -43,9 +43,45 @@ class ErrorBoundary extends React.Component {
 
 // 🎼 Main App Component
 const App = () => {
+  const [audioBuffer, setAudioBuffer] = useState(null);
+
   useEffect(() => {
     // Ensure Tone.js AudioContext is started
     Tone.start();
+
+    const loadAudio = async () => {
+      try {
+        const url = '/audio/sample.mp3'; // ✅ Update this path if needed
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("audio")) {
+          throw new Error("Fetched file is not an audio file.");
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const audioCtx = Tone.getContext().rawContext;
+
+        audioCtx.decodeAudioData(
+          arrayBuffer,
+          (buffer) => {
+            console.log('Audio loaded successfully:', buffer);
+            setAudioBuffer(buffer);
+          },
+          (error) => {
+            console.error("Decoding failed:", error);
+          }
+        );
+      } catch (error) {
+        console.error('Error loading audio:', error);
+      }
+    };
+
+    loadAudio();
   }, []);
 
   return (
@@ -60,7 +96,7 @@ const App = () => {
                 </header>
                 
                 <Suspense fallback={<p>Loading...</p>}>
-                  <MainContent />
+                  <MainContent audioBuffer={audioBuffer} />
                 </Suspense>
               </div>
             </TrackProvider>
@@ -72,7 +108,7 @@ const App = () => {
 };
 
 // 🎛 MainContent Component - Organized Logic
-const MainContent = () => {
+const MainContent = ({ audioBuffer }) => {
   const { tracks, addTrack, removeTrack } = useTrack();
 
   return (
@@ -86,7 +122,7 @@ const MainContent = () => {
           <TrackControls key={index} index={index} track={track} removeTrack={removeTrack} />
         ))}
 
-        <Visualizer />
+        <Visualizer audioBuffer={audioBuffer} />
         <Automation parameter="filterFrequency" />
         <Collaboration />
         <Export tracks={tracks} />
@@ -110,3 +146,4 @@ const TrackControls = ({ index, track, removeTrack }) => (
 );
 
 export default App;
+
