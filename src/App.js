@@ -40,23 +40,20 @@ class ErrorBoundary extends React.Component {
 
 const App = () => {
   const [tracks, setTracks] = useState([
-    { name: 'Track 1', synth: new Tone.Synth(), effects: [new Tone.Reverb()] },
-    { name: 'Track 2', synth: new Tone.Synth(), effects: [new Tone.Delay()] },
+    { name: 'Track 1', synth: new Tone.Synth().toDestination(), effects: [new Tone.Reverb().toDestination()] },
+    { name: 'Track 2', synth: new Tone.Synth().toDestination(), effects: [new Tone.Delay().toDestination()] },
   ]);
 
   useEffect(() => {
+    // Ensure Tone.js context is started
     Tone.start();
-    tracks.forEach(track => {
-      track.synth.toDestination();
-      track.effects.forEach(effect => effect.toDestination());
-    });
-  }, [tracks]);
+  }, []);
 
   const addTrack = () => {
     const newTrack = {
       name: `Track ${tracks.length + 1}`,
-      synth: new Tone.Synth(),
-      effects: [new Tone.Chorus()],
+      synth: new Tone.Synth().toDestination(),
+      effects: [new Tone.Chorus().toDestination()],
     };
     setTracks([...tracks, newTrack]);
   };
@@ -85,7 +82,7 @@ const App = () => {
                       <Sequencer synth={track.synth} />
                       <PianoRoll synth={track.synth} />
                       {track.effects.map((effect, effectIndex) => {
-                        const effectType = effect?.constructor?.name || "Unknown Effect";
+                        const effectType = effect.constructor.name.toLowerCase();
                         return (
                           <Effect key={effectIndex} effectType={effectType} track={track} />
                         );
