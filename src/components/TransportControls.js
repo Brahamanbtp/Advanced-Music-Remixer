@@ -22,10 +22,10 @@ const TransportControls = () => {
 
     document.body.addEventListener("click", handleStartAudioContext, { once: true });
 
-    Tone.Transport.on('transport', syncPosition);
+    Tone.Transport.on('time', syncPosition);
 
     return () => {
-      Tone.Transport.off('transport', syncPosition);
+      Tone.Transport.off('time', syncPosition);
     };
   }, [startAudioContext, syncPosition]);
 
@@ -57,11 +57,12 @@ const TransportControls = () => {
 
   const tapTempo = () => {
     const currentTime = Tone.now();
-    const lastTapTime = Tone.Transport.tapTempo(currentTime);
-    if (lastTapTime !== null) {
+    const lastTapTime = Tone.Transport.lastTapTime;
+    if (lastTapTime !== undefined) {
       const newBpm = 60 / ((currentTime - lastTapTime) / 1000);
       setBpmValue(newBpm.toFixed(2));
     }
+    Tone.Transport.lastTapTime = currentTime;
   };
 
   return (
