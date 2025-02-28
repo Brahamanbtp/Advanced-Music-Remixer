@@ -1,25 +1,33 @@
-import React, { useRef, useEffect } from 'react';
-import * as Tone from 'tone';
+import React, { useRef, useEffect, useState } from 'react';
 import { useAudio } from '../contexts/AudioContext';
 
 const Visualizer = ({ audioBuffer }) => {
   const canvasRef = useRef(null);
   const { startAudioContext } = useAudio();
+  const [isBufferLoaded, setIsBufferLoaded] = useState(false);
 
   useEffect(() => {
-    // Ensure AudioContext is started
-    startAudioContext();
+    startAudioContext(); // Ensure the audio context starts
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    console.log('Visualizer.js: Received audioBuffer:', audioBuffer);
 
     if (!audioBuffer) {
-      console.error('Audio buffer is not provided.');
+      console.warn('Visualizer.js: Audio buffer is not provided. Waiting for data...');
       return;
     }
 
+    if (!(audioBuffer instanceof AudioBuffer)) {
+      console.error('Visualizer.js: Invalid audioBuffer detected.', audioBuffer);
+      return;
+    }
+
+    setIsBufferLoaded(true);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
     const data = audioBuffer.getChannelData(0);
     const bufferLength = data.length;
 
@@ -29,7 +37,7 @@ const Visualizer = ({ audioBuffer }) => {
       ctx.strokeStyle = 'rgb(0, 0, 0)';
       ctx.beginPath();
 
-      const sliceWidth = width * 1.0 / bufferLength;
+      const sliceWidth = width / bufferLength;
       let x = 0;
 
       for (let i = 0; i < bufferLength; i++) {
@@ -45,60 +53,23 @@ const Visualizer = ({ audioBuffer }) => {
         x += sliceWidth;
       }
 
-      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.lineTo(width, height / 2);
       ctx.stroke();
     };
 
-    const drawSpectrogram = () => {
-      const analyser = Tone.context.createAnalyser();
-      analyser.fftSize = 2048;
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const draw = () => {
-        analyser.getByteTimeDomainData(dataArray);
-        ctx.clearRect(0, 0, width, height);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgb(0, 0, 0)';
-        ctx.beginPath();
-
-        let sliceWidth = width * 1.0 / bufferLength;
-        let x = 0;
-
-        for (let i = 0; i < bufferLength; i++) {
-          let v = dataArray[i] / 128.0;
-          let y = v * height / 2;
-
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-
-          x += sliceWidth;
-        }
-
-        ctx.lineTo(canvas.width, canvas.height / 2);
-        ctx.stroke();
-
-        requestAnimationFrame(draw);
-      };
-
-      draw();
-    };
-
     drawWaveform();
-    drawSpectrogram();
 
-    return () => {
-      ctx.clearRect(0, 0, width, height);
-    };
+    return () => ctx.clearRect(0, 0, width, height);
   }, [audioBuffer, startAudioContext]);
 
   return (
     <div className="visualizer">
       <h4>Audio Visualizer</h4>
-      <canvas ref={canvasRef} width={800} height={300} />
+      {!isBufferLoaded ? (
+        <p>Loading audio... Ensure an audio track is loaded.</p>
+      ) : (
+        <canvas ref={canvasRef} width={800} height={300} />
+      )}
     </div>
   );
 };
