@@ -1,52 +1,71 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useReducer, useContext, useEffect } from "react";
+import { produce } from "immer"; // ✅ Immutable state management
 
 // Create a context for managing project-related state
 export const ProjectContext = createContext();
 
-// Create a provider component to manage project state
-export const ProjectProvider = ({ children }) => {
-  const [project, setProject] = useState(() => {
-    // Initialize state from local storage if available
-    const savedProject = localStorage.getItem('musicProject');
+// Initial project state, loaded from localStorage if available
+const loadInitialProject = () => {
+  try {
+    const savedProject = localStorage.getItem("musicProject");
     return savedProject ? JSON.parse(savedProject) : {};
+  } catch (error) {
+    console.error("❌ Error loading project from local storage:", error);
+    return {};
+  }
+};
+
+// Reducer function for managing project state updates
+const projectReducer = (state, action) => {
+  return produce(state, (draft) => {
+    switch (action.type) {
+      case "SAVE_PROJECT":
+        return action.payload;
+      case "UPDATE_PROJECT":
+        Object.assign(draft, action.payload);
+        break;
+      default:
+        console.warn("⚠️ Unknown action type:", action.type);
+    }
   });
+};
 
-  // Function to save the current project state
+// ProjectProvider component
+export const ProjectProvider = ({ children }) => {
+  const [project, dispatch] = useReducer(projectReducer, {}, loadInitialProject);
+
+  // Function to save project state
   const saveProject = (data) => {
-    setProject(data);
-    try {
-      localStorage.setItem('musicProject', JSON.stringify(data));
-    } catch (error) {
-      console.error('Error saving project to local storage:', error);
-    }
-  };
-
-  // Function to load a project from local storage
-  const loadProject = () => {
-    const savedProject = localStorage.getItem('musicProject');
-    if (savedProject) {
-      setProject(JSON.parse(savedProject));
-    }
+    dispatch({ type: "SAVE_PROJECT", payload: data });
+    persistToLocalStorage(data);
   };
 
   // Function to update the project state
   const updateProject = (updatedData) => {
-    const newProject = { ...project, ...updatedData };
-    setProject(newProject);
+    dispatch({ type: "UPDATE_PROJECT", payload: updatedData });
+    persistToLocalStorage({ ...project, ...updatedData });
+  };
+
+  // Efficient local storage update with requestIdleCallback
+  const persistToLocalStorage = (data) => {
     try {
-      localStorage.setItem('musicProject', JSON.stringify(newProject));
+      if (window.requestIdleCallback) {
+        requestIdleCallback(() => localStorage.setItem("musicProject", JSON.stringify(data)));
+      } else {
+        setTimeout(() => localStorage.setItem("musicProject", JSON.stringify(data)), 200);
+      }
     } catch (error) {
-      console.error('Error updating project in local storage:', error);
+      console.error("❌ Error saving project to local storage:", error);
     }
   };
 
   // Load project from local storage on mount
   useEffect(() => {
-    loadProject();
+    dispatch({ type: "SAVE_PROJECT", payload: loadInitialProject() });
   }, []);
 
   return (
-    <ProjectContext.Provider value={{ project, saveProject, loadProject, updateProject }}>
+    <ProjectContext.Provider value={{ project, saveProject, updateProject }}>
       {children}
     </ProjectContext.Provider>
   );
@@ -56,7 +75,7 @@ export const ProjectProvider = ({ children }) => {
 export const useProject = () => {
   const context = useContext(ProjectContext);
   if (!context) {
-    throw new Error('useProject must be used within a ProjectProvider');
+    throw new Error("useProject must be used within a ProjectProvider");
   }
   return context;
 };
