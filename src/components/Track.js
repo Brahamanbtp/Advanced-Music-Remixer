@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
 import * as Tone from 'tone';
 import { AudioContext } from '../contexts/AudioContext';
 import PianoRoll from './PianoRoll';
@@ -11,17 +11,22 @@ const Track = ({ name, synth, reverb, delay }) => {
   const [recording, setRecording] = useState(false);
   const [recordedSequence, setRecordedSequence] = useState([]);
   const [audioBuffer, setAudioBuffer] = useState(null);
+  const midiAccessRef = useRef(null);
+  const sequenceRef = useRef(sequence);
+
+  // Update sequence reference for better reactivity
+  useEffect(() => {
+    sequenceRef.current = sequence;
+  }, [sequence]);
 
   const loopCallback = useCallback((time) => {
-    sequence.forEach((note, index) => {
+    sequenceRef.current.forEach((note, index) => {
       synth.triggerAttackRelease(note, '8n', time + index * 0.5);
     });
-  }, [sequence, synth]);
+  }, [synth]);
 
   useEffect(() => {
-    const loop = new Tone.Loop(loopCallback, '1m');
-    loop.start(0);
-
+    const loop = new Tone.Part(loopCallback, sequence.map((_, i) => i * 0.5)).start(0);
     Tone.Transport.start();
 
     return () => {
@@ -38,22 +43,25 @@ const Track = ({ name, synth, reverb, delay }) => {
       const handleMidiMessage = (event) => {
         const [command, note, velocity] = event.data;
         if (command === 144 && velocity > 0) {
-          const noteName = Tone.Frequency(note, "midi").toNote();
+          const noteName = Tone.Frequency(note, 'midi').toNote();
           recordNote(noteName);
         }
       };
 
-      navigator.requestMIDIAccess().then((access) => {
-        const inputs = access.inputs.values();
-        for (let input of inputs) {
-          input.onmidimessage = handleMidiMessage;
-        }
-      });
+      if (!midiAccessRef.current) {
+        navigator.requestMIDIAccess().then((access) => {
+          midiAccessRef.current = access;
+          for (let input of access.inputs.values()) {
+            input.onmidimessage = handleMidiMessage;
+          }
+        });
+      }
 
       return () => {
-        const inputs = access.inputs.values();
-        for (let input of inputs) {
-          input.onmidimessage = null;
+        if (midiAccessRef.current) {
+          for (let input of midiAccessRef.current.inputs.values()) {
+            input.onmidimessage = null;
+          }
         }
       };
     }
@@ -75,28 +83,30 @@ const Track = ({ name, synth, reverb, delay }) => {
     const offlineContext = new OfflineAudioContext(2, Tone.Transport.seconds * 44100, 44100);
     const renderer = new Tone.Renderer(offlineContext);
     await renderer.render();
-    const audioBuffer = renderer.toWave();
-    setAudioBuffer(audioBuffer);
+    setAudioBuffer(renderer.toWave());
   };
 
   return (
     <div className="track">
-      <h3>{name}</h3>
+      <h3>🎵 {name}</h3>
       <button onClick={() => synth.triggerAttackRelease('C4', '8n')}>Play C4</button>
       <button onClick={() => toggleEffect(reverb)}>Toggle Reverb</button>
       <button onClick={() => toggleEffect(delay)}>Toggle Delay</button>
+
       <PianoRoll synth={synth} />
-      <div>
-        <h4>Sequencer</h4>
+
+      <div className="sequencer">
+        <h4>🎼 Sequencer</h4>
         <input
           type="text"
           value={sequence.join(' ')}
           onChange={(e) => setSequence(e.target.value.split(' '))}
         />
-        <button onClick={toggleRecording}>{recording ? 'Stop Recording' : 'Start Recording'}</button>
+        <button onClick={toggleRecording}>{recording ? '⏹ Stop Recording' : '🎤 Start Recording'}</button>
       </div>
-      <div>
-        <h4>Effect Controls</h4>
+
+      <div className="effect-controls">
+        <h4>🎛 Effect Controls</h4>
         <label>
           Reverb Wet
           <input
@@ -120,8 +130,9 @@ const Track = ({ name, synth, reverb, delay }) => {
           />
         </label>
       </div>
-      <div>
-        <h4>Automation</h4>
+
+      <div className="automation">
+        <h4>📈 Automation</h4>
         {automation.map((auto, index) => (
           <div key={index}>
             <label>
@@ -138,15 +149,16 @@ const Track = ({ name, synth, reverb, delay }) => {
           </div>
         ))}
       </div>
-      <div>
-        <h4>Visualizations</h4>
+
+      <div className="visualizations">
+        <h4>🎧 Visualizations</h4>
         {audioBuffer && (
           <>
             <Waveform audioBuffer={audioBuffer} />
             <Spectrogram audioBuffer={audioBuffer} />
           </>
         )}
-        <button onClick={captureAudioBuffer}>Capture Audio Buffer</button>
+        <button onClick={captureAudioBuffer}>📡 Capture Audio Buffer</button>
       </div>
     </div>
   );
