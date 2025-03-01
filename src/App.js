@@ -118,14 +118,14 @@ const App = () => {
 
 // 🎛 MainContent Component - Organized Logic
 const MainContent = ({ audioBuffer }) => {
-  const { tracks, addTrack, removeTrack } = useTrack();
+  const { tracks, setTracks, addTrack, removeTrack } = useTrack();
 
   return (
     <main>
       <section className="controls">
         <TransportControls />
         <button onClick={addTrack} className="add-track-btn">➕ Add Track</button>
-        <Mixer tracks={tracks} />
+        <Mixer tracks={tracks} setTracks={setTracks} />
 
         {tracks.length > 0 ? (
           tracks.map((track, index) => (
