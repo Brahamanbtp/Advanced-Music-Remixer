@@ -1,32 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 
 const Sequencer = ({ synth }) => {
   const [sequence, setSequence] = useState(['C4', 'E4', 'G4', 'B4']);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [step, setStep] = useState(0);
+  const sequenceRef = useRef(sequence);
+  const partRef = useRef(null);
 
   useEffect(() => {
-    const loop = new Tone.Loop((time) => {
-      sequence.forEach((note, index) => {
-        if (index === step) {
-          synth.triggerAttackRelease(note, '8n', time);
-        }
-      });
-      setStep((prevStep) => (prevStep + 1) % sequence.length);
-    }, '8n').start(0);
+    sequenceRef.current = sequence;
+  }, [sequence]);
 
-    Tone.Transport.start();
+  useEffect(() => {
+    // Ensure AudioContext is running
+    if (Tone.context.state !== 'running') {
+      Tone.start();
+    }
+
+    if (partRef.current) {
+      partRef.current.dispose();
+    }
+
+    // Create a Tone.Part to ensure proper timing
+    partRef.current = new Tone.Part((time, note) => {
+      synth.triggerAttackRelease(note, '8n', time);
+    }, sequence.map((note, i) => [i * 0.5, note])); // Ensures strictly increasing times
+
+    partRef.current.loop = true;
+    partRef.current.loopEnd = `${sequence.length * 0.5}s`;
+    partRef.current.start(0);
 
     return () => {
-      loop.dispose();
+      if (partRef.current) {
+        partRef.current.dispose();
+      }
     };
-  }, [sequence, synth, step]);
+  }, [sequence, synth]);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     if (isPlaying) {
       Tone.Transport.stop();
     } else {
+      await Tone.start(); // Ensures user interaction starts AudioContext
       Tone.Transport.start();
     }
     setIsPlaying(!isPlaying);
