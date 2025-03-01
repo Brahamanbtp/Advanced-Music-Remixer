@@ -1,60 +1,67 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
-import { CollaborationContext } from '../contexts/CollaborationContext';
+import { useState, useEffect, useContext, useCallback, useReducer, useRef } from "react";
+import { CollaborationContext } from "../contexts/CollaborationContext";
 
+// 🎚 Reducer for managing local project state
+const projectReducer = (state, action) => {
+  switch (action.type) {
+    case "SET_PROJECT":
+      return action.payload;
+    case "UPDATE_PROJECT":
+      return { ...state, ...action.payload };
+    default:
+      console.warn("⚠️ Unknown action type:", action.type);
+      return state;
+  }
+};
+
+// 🎛 Custom Hook for Collaboration
 const useCollaboration = () => {
-  const { users, projectData, updateProject, syncProjectWithServer } = useContext(CollaborationContext);
-  const [localProjectData, setLocalProjectData] = useState(projectData);
+  const { users, projectData, updateProject } = useContext(CollaborationContext);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [localProjectData, dispatch] = useReducer(projectReducer, projectData);
 
+  // 🔄 Sync local state with global projectData
   useEffect(() => {
-    // Sync local changes with the project data from the server
-    setLocalProjectData(projectData);
+    dispatch({ type: "SET_PROJECT", payload: projectData });
   }, [projectData]);
+
+  // ⏳ Debounced sync function using useRef
+  const debounceRef = useRef(null);
 
   const syncProject = useCallback(async () => {
     if (isSyncing) return;
     setIsSyncing(true);
+    
     try {
+      console.log("🔄 Syncing project with server...");
       await updateProject(localProjectData);
-      console.log('Project synced successfully');
+      console.log("✅ Project synced successfully!");
     } catch (error) {
-      console.error('Error syncing project:', error);
+      console.error("❌ Error syncing project:", error);
     } finally {
       setIsSyncing(false);
     }
   }, [localProjectData, updateProject, isSyncing]);
 
-  const debouncedSync = useCallback(
-    debounce(() => {
-      syncProject();
-    }, 500),
-    [syncProject]
-  );
+  // 🔹 Debounce function to limit sync rate
+  const debouncedSync = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(syncProject, 500);
+  }, [syncProject]);
 
+  // 🔄 Automatically sync on project changes
   useEffect(() => {
-    // Sync project with server on component unmount or when localProjectData change
     debouncedSync();
-    return () => {
-      debouncedSync.cancel();
-    };
+    return () => clearTimeout(debounceRef.current);
   }, [localProjectData, debouncedSync]);
 
   return {
     users,
     localProjectData,
-    setLocalProjectData,
+    setLocalProjectData: (data) => dispatch({ type: "UPDATE_PROJECT", payload: data }),
     syncProject,
     isSyncing,
   };
 };
-
-// Debounce function to limit the rate at which syncProject is called
-function debounce(func, delay) {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(this, args), delay);
-  };
-}
 
 export default useCollaboration;
