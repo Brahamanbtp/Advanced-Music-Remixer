@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const useMidi = (onMidiMessage) => {
   const [midiAccess, setMidiAccess] = useState(null);
+  const midiInputsRef = useRef(new Map());
 
   const handleMidiMessage = useCallback((event) => {
-    onMidiMessage(event);
+    if (onMidiMessage && typeof onMidiMessage === 'function') {
+      onMidiMessage(event);
+    }
   }, [onMidiMessage]);
 
   useEffect(() => {
@@ -13,24 +16,28 @@ const useMidi = (onMidiMessage) => {
         const access = await navigator.requestMIDIAccess();
         setMidiAccess(access);
 
-        access.inputs.forEach((input) => {
-          input.onmidimessage = handleMidiMessage;
-        });
-
-        access.onstatechange = (event) => {
-          if (event.port.state === 'disconnected') {
-            console.warn('MIDI device disconnected:', event.port);
-            setMidiAccess((prevAccess) => {
-              const updatedInputs = prevAccess.inputs.filter(
-                (input) => input !== event.port
-              );
-              return { ...prevAccess, inputs: updatedInputs };
-            });
-          } else if (event.port.state === 'connected') {
-            console.log('MIDI device connected:', event.port);
-            event.port.onmidimessage = handleMidiMessage;
+        const handlePortChange = (event) => {
+          const { port } = event;
+          if (port.type === 'input') {
+            if (port.state === 'connected' && !midiInputsRef.current.has(port.id)) {
+              console.log('MIDI device connected:', port.name);
+              port.onmidimessage = handleMidiMessage;
+              midiInputsRef.current.set(port.id, port);
+            } else if (port.state === 'disconnected') {
+              console.warn('MIDI device disconnected:', port.name);
+              if (midiInputsRef.current.has(port.id)) {
+                midiInputsRef.current.delete(port.id);
+              }
+            }
           }
         };
+
+        access.inputs.forEach((input) => {
+          input.onmidimessage = handleMidiMessage;
+          midiInputsRef.current.set(input.id, input);
+        });
+
+        access.onstatechange = handlePortChange;
       } catch (error) {
         console.error('Error accessing MIDI devices:', error);
       }
@@ -38,13 +45,11 @@ const useMidi = (onMidiMessage) => {
 
     setupMidi();
 
-    // Clean up the effect
     return () => {
-      if (midiAccess) {
-        midiAccess.inputs.forEach((input) => {
-          input.onmidimessage = null;
-        });
-      }
+      midiInputsRef.current.forEach((input) => {
+        input.onmidimessage = null;
+      });
+      midiInputsRef.current.clear();
     };
   }, [handleMidiMessage]);
 
