@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import Effect from './Effect';
 
@@ -10,27 +10,55 @@ const Mixer = ({ tracks }) => {
     delay: false,
   });
 
-  const reverb = new Tone.Reverb().toDestination();
-  const delay = new Tone.FeedbackDelay().toDestination();
+  // Ensure audio context starts on user interaction
+  const startAudioContext = async () => {
+    if (Tone.context.state !== 'running') {
+      await Tone.start();
+      console.log('Audio context started');
+    }
+  };
+
+  // Use refs to persist effects across renders
+  const reverbRef = useRef(null);
+  const delayRef = useRef(null);
 
   useEffect(() => {
+    reverbRef.current = new Tone.Reverb().toDestination();
+    delayRef.current = new Tone.FeedbackDelay().toDestination();
+
     return () => {
-      reverb.disconnect();
-      delay.disconnect();
-      reverb.dispose();
-      delay.dispose();
+      if (reverbRef.current) {
+        reverbRef.current.disconnect();
+        reverbRef.current.dispose();
+      }
+      if (delayRef.current) {
+        delayRef.current.disconnect();
+        delayRef.current.dispose();
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applySendEffect = (track) => {
-    if (!effectsBypassed.reverb) {
+    if (!track?.synth) {
+      console.warn('Skipping effect application: Synth not initialized for track', track);
+      return;
+    }
+
+    const reverb = reverbRef.current;
+    const delay = delayRef.current;
+
+    if (!effectsBypassed.reverb && reverb) {
       track.synth.connect(reverb);
       reverb.wet.value = sendLevel;
+    } else {
+      track.synth.disconnect(reverb);
     }
-    if (!effectsBypassed.delay) {
+
+    if (!effectsBypassed.delay && delay) {
       track.synth.connect(delay);
       delay.wet.value = sendLevel;
+    } else {
+      track.synth.disconnect(delay);
     }
   };
 
@@ -43,6 +71,8 @@ const Mixer = ({ tracks }) => {
 
   return (
     <div className="mixer">
+      <button onClick={startAudioContext}>Start Audio</button>
+
       <div className="master-controls">
         <h4>Master Volume</h4>
         <input
@@ -52,14 +82,17 @@ const Mixer = ({ tracks }) => {
           step="0.01"
           value={masterVolume}
           onChange={(e) => {
-            setMasterVolume(e.target.value);
-            Tone.Destination.volume.value = e.target.value;
+            const volume = parseFloat(e.target.value);
+            setMasterVolume(volume);
+            Tone.Destination.volume.value = Tone.gainToDb(volume);
           }}
         />
       </div>
+
       {tracks.map((track, index) => (
         <div key={index} className="mixer-track">
           <h4>{track.name}</h4>
+
           <label>
             Volume
             <input
@@ -68,9 +101,14 @@ const Mixer = ({ tracks }) => {
               max="1"
               step="0.01"
               defaultValue="1"
-              onChange={(e) => (track.synth.volume.value = e.target.value)}
+              onChange={(e) => {
+                if (track.synth) {
+                  track.synth.volume.value = Tone.gainToDb(parseFloat(e.target.value));
+                }
+              }}
             />
           </label>
+
           <label>
             Send Level
             <input
@@ -80,24 +118,24 @@ const Mixer = ({ tracks }) => {
               step="0.01"
               value={sendLevel}
               onChange={(e) => {
-                setSendLevel(e.target.value);
+                setSendLevel(parseFloat(e.target.value));
                 applySendEffect(track);
               }}
             />
           </label>
+
           <div className="effects">
-            <Effect effectType="reverb" track={track} />
-            <Effect effectType="delay" track={track} />
-            <Effect effectType="distortion" track={track} />
-            <Effect effectType="chorus" track={track} />
+            {['reverb', 'delay', 'distortion', 'chorus'].map((effectType) => (
+              <Effect key={effectType} effectType={effectType} track={track} />
+            ))}
           </div>
+
           <div className="effect-bypass">
-            <button onClick={() => toggleEffectBypass('reverb')}>
-              {effectsBypassed.reverb ? 'Enable' : 'Bypass'} Reverb
-            </button>
-            <button onClick={() => toggleEffectBypass('delay')}>
-              {effectsBypassed.delay ? 'Enable' : 'Bypass'} Delay
-            </button>
+            {['reverb', 'delay'].map((effect) => (
+              <button key={effect} onClick={() => toggleEffectBypass(effect)}>
+                {effectsBypassed[effect] ? 'Enable' : 'Bypass'} {effect.charAt(0).toUpperCase() + effect.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
       ))}
