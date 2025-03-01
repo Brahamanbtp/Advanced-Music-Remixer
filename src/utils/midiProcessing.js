@@ -1,83 +1,86 @@
-// Function to convert MIDI data to a note sequence
+import * as Tone from 'tone';
+
+// Function to convert MIDI data to a structured note sequence with timing and velocity
 export const midiToNoteSequence = (midiData) => {
-  const noteSequence = [];
+  if (!midiData || !midiData.tracks) {
+    console.error('Invalid MIDI data provided');
+    return [];
+  }
 
-  midiData.tracks.forEach((track) => {
+  return midiData.tracks.flatMap((track) => {
     let time = 0;
-    track.forEach((event) => {
-      time += event.deltaTime;
-      if (event.type === 'noteOn' && event.velocity > 0) {
-        noteSequence.push({
-          note: Tone.Frequency(event.noteNumber, "midi").toNote(),
-          time: time,
-          velocity: event.velocity,
-        });
-      }
-    });
-  });
-
-  return noteSequence;
-};
-
-// Function to quantize MIDI events to the nearest beat
-export const quantizeMidiEvents = (midiData, quantizeValue = 16) => {
-  const quantizedData = { ...midiData, tracks: [] };
-
-  midiData.tracks.forEach((track) => {
-    const quantizedTrack = [];
-    let time = 0;
-
-    track.forEach((event) => {
-      time += event.deltaTime;
-      const quantizedTime = Math.round(time / quantizeValue) * quantizeValue;
-      quantizedTrack.push({
-        ...event,
-        deltaTime: quantizedTime - (time - event.deltaTime),
-      });
-      time = quantizedTime;
-    });
-
-    quantizedData.tracks.push(quantizedTrack);
-  });
-
-  return quantizedData;
-};
-
-// Function to transpose MIDI notes by a specified interval
-export const transposeMidiNotes = (midiData, interval = 0) => {
-  const transposedData = { ...midiData, tracks: [] };
-
-  midiData.tracks.forEach((track) => {
-    const transposedTrack = track.map((event) => {
-      if (event.type === 'noteOn' || event.type === 'noteOff') {
+    return track
+      .filter((event) => event.type === 'noteOn' && event.velocity > 0)
+      .map((event) => {
+        time += event.deltaTime;
         return {
-          ...event,
-          noteNumber: event.noteNumber + interval,
+          note: Tone.Frequency(event.noteNumber, 'midi').toNote(),
+          time,
+          velocity: event.velocity / 127, // Normalize velocity to 0-1
         };
-      }
-      return event;
-    });
-
-    transposedData.tracks.push(transposedTrack);
+      });
   });
-
-  return transposedData;
 };
 
-// Function to filter MIDI events by type
+// Function to quantize MIDI events to a given beat grid
+export const quantizeMidiEvents = (midiData, quantizeValue = 16) => {
+  if (!midiData || !midiData.tracks) {
+    console.error('Invalid MIDI data provided');
+    return null;
+  }
+
+  return {
+    ...midiData,
+    tracks: midiData.tracks.map((track) => {
+      let time = 0;
+      return track.map((event) => {
+        time += event.deltaTime;
+        const quantizedTime = Math.round(time / quantizeValue) * quantizeValue;
+        return { ...event, deltaTime: quantizedTime - (time - event.deltaTime) };
+      });
+    }),
+  };
+};
+
+// Function to transpose MIDI notes by a specified interval (in semitones)
+export const transposeMidiNotes = (midiData, interval = 0) => {
+  if (!midiData || !midiData.tracks) {
+    console.error('Invalid MIDI data provided');
+    return null;
+  }
+
+  return {
+    ...midiData,
+    tracks: midiData.tracks.map((track) =>
+      track.map((event) =>
+        event.type === 'noteOn' || event.type === 'noteOff'
+          ? { ...event, noteNumber: Math.max(0, Math.min(127, event.noteNumber + interval)) }
+          : event
+      )
+    ),
+  };
+};
+
+// Function to filter MIDI events by type (e.g., 'noteOn', 'noteOff', 'controlChange')
 export const filterMidiEvents = (midiData, eventType) => {
-  const filteredData = { ...midiData, tracks: [] };
+  if (!midiData || !midiData.tracks) {
+    console.error('Invalid MIDI data provided');
+    return null;
+  }
 
-  midiData.tracks.forEach((track) => {
-    const filteredTrack = track.filter((event) => event.type === eventType);
-    filteredData.tracks.push(filteredTrack);
-  });
-
-  return filteredData;
+  return {
+    ...midiData,
+    tracks: midiData.tracks.map((track) => track.filter((event) => event.type === eventType)),
+  };
 };
 
-// Function to merge multiple MIDI tracks into one
+// Function to merge multiple MIDI tracks into one, ensuring proper time alignment
 export const mergeMidiTracks = (midiData) => {
+  if (!midiData || !midiData.tracks) {
+    console.error('Invalid MIDI data provided');
+    return null;
+  }
+
   const mergedTrack = [];
   let time = 0;
 
