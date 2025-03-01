@@ -6,6 +6,7 @@ export const AudioContext = createContext();
 export const AudioProvider = ({ children }) => {
   const [automation, setAutomation] = useState(new Map()); // Efficient automation storage
   const [isAudioReady, setIsAudioReady] = useState(false);
+  const [persistAutomation, setPersistAutomation] = useState(false); // Toggle for persistent automation
   const audioContextRef = useRef(null);
 
   // Function to initialize or resume the AudioContext
@@ -13,16 +14,17 @@ export const AudioProvider = ({ children }) => {
     if (!audioContextRef.current) {
       try {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
-          latencyHint: "interactive", // Lower latency for real-time audio
+          latencyHint: "interactive", // Low latency for real-time audio
           sampleRate: 44100, // Standard sample rate for high-quality audio
         });
+        console.log("🎵 AudioContext initialized!");
         setIsAudioReady(true);
       } catch (error) {
         console.error("🚨 Error initializing AudioContext:", error);
       }
     }
 
-    if (audioContextRef.current.state === "suspended") {
+    if (audioContextRef.current?.state === "suspended") {
       try {
         await audioContextRef.current.resume();
         console.log("🔊 AudioContext resumed!");
@@ -37,14 +39,29 @@ export const AudioProvider = ({ children }) => {
     setAutomation((prevAutomation) => {
       const updatedAutomation = new Map(prevAutomation);
       updatedAutomation.set(time, { parameter, time, value }); // Store unique automation points
+
+      if (persistAutomation) {
+        localStorage.setItem("automationData", JSON.stringify([...updatedAutomation])); // Persist data
+      }
+
       return updatedAutomation;
     });
   };
 
+  // Load persisted automation on mount
+  useEffect(() => {
+    if (persistAutomation) {
+      const storedAutomation = localStorage.getItem("automationData");
+      if (storedAutomation) {
+        setAutomation(new Map(JSON.parse(storedAutomation)));
+      }
+    }
+  }, [persistAutomation]);
+
   // Effect to auto-resume AudioContext when visibility changes
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && audioContextRef.current) {
+      if (document.visibilityState === "visible") {
         startAudioContext();
       }
     };
@@ -55,7 +72,7 @@ export const AudioProvider = ({ children }) => {
     };
   }, []);
 
-  // Auto-resume on user interaction (helps with iOS autoplay restrictions)
+  // Auto-resume on user interaction (fixes iOS autoplay restrictions)
   useEffect(() => {
     const handleUserInteraction = () => {
       startAudioContext();
@@ -73,7 +90,14 @@ export const AudioProvider = ({ children }) => {
   }, []);
 
   return (
-    <AudioContext.Provider value={{ automation, addAutomationPoint, startAudioContext, isAudioReady }}>
+    <AudioContext.Provider value={{ 
+      automation, 
+      addAutomationPoint, 
+      startAudioContext, 
+      isAudioReady,
+      persistAutomation,
+      setPersistAutomation
+    }}>
       {children}
     </AudioContext.Provider>
   );
