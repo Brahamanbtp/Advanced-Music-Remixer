@@ -1,55 +1,65 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from "react";
 
 const Waveform = ({ audioBuffer }) => {
   const canvasRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: window.innerWidth * 0.8, height: 300 });
+  const animationRef = useRef(null);
 
   useEffect(() => {
+    if (!audioBuffer) return;
+
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    if (!audioBuffer) {
-      console.error('Audio buffer is not provided.');
-      return;
-    }
+    // Set up responsive resizing
+    const handleResize = () => {
+      setDimensions({ width: window.innerWidth * 0.8, height: 300 });
+    };
+    window.addEventListener("resize", handleResize);
 
-    const data = audioBuffer.getChannelData(0); // Get the audio data from the first channel
-    const bufferLength = data.length;
+    // Extract multi-channel audio data
+    const channels = Array.from({ length: audioBuffer.numberOfChannels }, (_, i) =>
+      audioBuffer.getChannelData(i)
+    );
+    const bufferLength = channels[0].length;
 
     const drawWaveform = () => {
-      ctx.clearRect(0, 0, width, height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgb(0, 0, 0)';
+      ctx.strokeStyle = "#00ffcc"; // Neon Cyan for high contrast
+      ctx.fillStyle = "rgba(0, 255, 204, 0.2)"; // Soft filled effect
       ctx.beginPath();
 
-      const sliceWidth = width * 1.0 / bufferLength;
+      const sliceWidth = canvas.width / bufferLength;
       let x = 0;
 
       for (let i = 0; i < bufferLength; i++) {
-        const v = data[i] * height / 2;
-        const y = height / 2 - v;
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-
+        const y = canvas.height / 2 - channels[0][i] * canvas.height * 0.4;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         x += sliceWidth;
       }
 
-      ctx.lineTo(canvas.width, canvas.height / 2);
       ctx.stroke();
+      ctx.fill();
+      animationRef.current = requestAnimationFrame(drawWaveform);
     };
 
-    drawWaveform();
-  }, [audioBuffer]);
+    // Start animation loop
+    animationRef.current = requestAnimationFrame(drawWaveform);
+
+    return () => {
+      cancelAnimationFrame(animationRef.current);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [audioBuffer, dimensions]);
 
   return (
-    <div className="waveform">
-      <h4>Waveform Visualization</h4>
-      <canvas ref={canvasRef} width={800} height={300} />
+    <div style={{ textAlign: "center", padding: "10px", background: "#111", borderRadius: "8px" }}>
+      <h4 style={{ color: "#00ffcc", fontFamily: "Arial, sans-serif" }}>Waveform Visualization</h4>
+      <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
     </div>
   );
 };
