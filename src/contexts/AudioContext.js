@@ -1,11 +1,10 @@
-import React, { createContext, useState, useContext, useRef, useEffect } from 'react';
+import React, { createContext, useState, useContext, useRef, useEffect } from "react";
 
-// Create a context for managing audio-related state
+// Create AudioContext
 export const AudioContext = createContext();
 
-// Create a provider component to manage audio state
 export const AudioProvider = ({ children }) => {
-  const [automation, setAutomation] = useState([]);
+  const [automation, setAutomation] = useState(new Map()); // Efficient automation storage
   const [isAudioReady, setIsAudioReady] = useState(false);
   const audioContextRef = useRef(null);
 
@@ -13,40 +12,63 @@ export const AudioProvider = ({ children }) => {
   const startAudioContext = async () => {
     if (!audioContextRef.current) {
       try {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
+          latencyHint: "interactive", // Lower latency for real-time audio
+          sampleRate: 44100, // Standard sample rate for high-quality audio
+        });
         setIsAudioReady(true);
       } catch (error) {
-        console.error('Error initializing AudioContext:', error);
+        console.error("🚨 Error initializing AudioContext:", error);
       }
     }
-    if (audioContextRef.current.state === 'suspended') {
+
+    if (audioContextRef.current.state === "suspended") {
       try {
         await audioContextRef.current.resume();
+        console.log("🔊 AudioContext resumed!");
       } catch (error) {
-        console.error('Error resuming AudioContext:', error);
+        console.error("🚨 Error resuming AudioContext:", error);
       }
     }
   };
 
-  // Function to add an automation point
+  // Function to add an automation point efficiently
   const addAutomationPoint = (parameter, time, value) => {
-    setAutomation((prevAutomation) => [
-      ...prevAutomation,
-      { parameter, time, value },
-    ]);
+    setAutomation((prevAutomation) => {
+      const updatedAutomation = new Map(prevAutomation);
+      updatedAutomation.set(time, { parameter, time, value }); // Store unique automation points
+      return updatedAutomation;
+    });
   };
 
-  // Effect to handle AudioContext suspension on page visibility change
+  // Effect to auto-resume AudioContext when visibility changes
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && audioContextRef.current) {
+      if (document.visibilityState === "visible" && audioContextRef.current) {
         startAudioContext();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  // Auto-resume on user interaction (helps with iOS autoplay restrictions)
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      startAudioContext();
+      document.removeEventListener("click", handleUserInteraction);
+      document.removeEventListener("keydown", handleUserInteraction);
+    };
+
+    document.addEventListener("click", handleUserInteraction);
+    document.addEventListener("keydown", handleUserInteraction);
+
+    return () => {
+      document.removeEventListener("click", handleUserInteraction);
+      document.removeEventListener("keydown", handleUserInteraction);
     };
   }, []);
 
@@ -61,7 +83,7 @@ export const AudioProvider = ({ children }) => {
 export const useAudio = () => {
   const context = useContext(AudioContext);
   if (!context) {
-    throw new Error('useAudio must be used within an AudioProvider');
+    throw new Error("🚨 useAudio must be used within an AudioProvider");
   }
   return context;
 };
