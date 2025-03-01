@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as Tone from 'tone';
 import { useAudio } from '../contexts/AudioContext';
 
@@ -6,48 +6,60 @@ const TransportControls = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(120);
   const [loop, setLoop] = useState(false);
-  const [position, setPosition] = useState("0:0:0"); // Default Tone.js format
+  const [position, setPosition] = useState("0:0:0");
+  const lastTapTimeRef = useRef(null);
+  const positionRef = useRef(null);
   const { startAudioContext } = useAudio();
 
+  // Smooth position updates
   const syncPosition = useCallback(() => {
+    if (!isPlaying) return;
     setPosition(Tone.Transport.position);
-  }, []);
+    positionRef.current = requestAnimationFrame(syncPosition);
+  }, [isPlaying]);
 
   useEffect(() => {
+    // Ensure AudioContext is started properly
     const handleStartAudioContext = async () => {
-      startAudioContext();
+      await startAudioContext();
       await Tone.start();
       console.log("AudioContext started!");
     };
 
     document.body.addEventListener("click", handleStartAudioContext, { once: true });
 
-    Tone.Transport.on('time', syncPosition);
-
     return () => {
-      Tone.Transport.off('time', syncPosition);
+      if (positionRef.current) {
+        cancelAnimationFrame(positionRef.current);
+      }
     };
-  }, [startAudioContext, syncPosition]);
+  }, [startAudioContext]);
 
   const start = async () => {
-    await Tone.start(); // Ensures AudioContext is started properly
+    await Tone.start();
     Tone.Transport.start();
     setIsPlaying(true);
+    syncPosition();
   };
 
   const stop = () => {
     Tone.Transport.stop();
     setIsPlaying(false);
+    if (positionRef.current) {
+      cancelAnimationFrame(positionRef.current);
+    }
   };
 
   const toggleLoop = () => {
-    Tone.Transport.loop = !loop;
-    setLoop(!loop);
+    const newLoopState = !loop;
+    Tone.Transport.loop = newLoopState;
+    setLoop(newLoopState);
   };
 
   const setBpmValue = (value) => {
-    Tone.Transport.bpm.value = parseFloat(value);
-    setBpm(value);
+    const newBpm = Math.max(60, Math.min(240, parseFloat(value)));
+    Tone.Transport.bpm.value = newBpm;
+    setBpm(newBpm);
   };
 
   const rewind = () => {
@@ -57,12 +69,12 @@ const TransportControls = () => {
 
   const tapTempo = () => {
     const currentTime = Tone.now();
-    const lastTapTime = Tone.Transport.lastTapTime;
-    if (lastTapTime !== undefined) {
-      const newBpm = 60 / ((currentTime - lastTapTime) / 1000);
-      setBpmValue(newBpm.toFixed(2));
+    if (lastTapTimeRef.current) {
+      const timeDiff = currentTime - lastTapTimeRef.current;
+      const newBpm = Math.round(60 / timeDiff);
+      setBpmValue(newBpm);
     }
-    Tone.Transport.lastTapTime = currentTime;
+    lastTapTimeRef.current = currentTime;
   };
 
   return (
@@ -81,9 +93,7 @@ const TransportControls = () => {
           max="240"
         />
       </label>
-      <div className="position-display">
-        Position: {position}
-      </div>
+      <div className="position-display">Position: {position}</div>
     </div>
   );
 };
