@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { useAudio } from '../contexts/AudioContext';
-import * as Tone from 'tone';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useAudio } from "../contexts/AudioContext";
+import * as Tone from "tone";
 
 const Automation = ({ parameter }) => {
   const { automation, addAutomationPoint } = useAudio();
@@ -10,24 +10,32 @@ const Automation = ({ parameter }) => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
 
     const drawAutomation = () => {
+      if (!automation || automation.size === 0) return;
+
       const width = canvas.width;
       const height = canvas.height;
       ctx.clearRect(0, 0, width, height);
 
-      const filteredPoints = automation.filter((point) => point.parameter === parameter);
+      // ✅ Convert `Map` to an array before filtering
+      const automationArray = Array.from(automation.values());
+      const filteredPoints = automationArray.filter(
+        (point) => point.parameter === parameter
+      );
 
       if (filteredPoints.length === 0) return;
 
+      // ✅ Enhanced Styling
       ctx.beginPath();
-      ctx.strokeStyle = '#00BFFF'; // Light Blue for better visibility
+      ctx.strokeStyle = "#00BFFF"; // Light Blue for visibility
       ctx.lineWidth = 2;
 
       filteredPoints.forEach((point, index) => {
         const x = (point.time / Tone.Transport.seconds) * width;
-        const y = height - point.value * height;
+        const y = height - point.value * height; // Scale value
 
         if (index === 0) {
           ctx.moveTo(x, y);
@@ -50,24 +58,28 @@ const Automation = ({ parameter }) => {
       animationRef.current = requestAnimationFrame(animate);
     }
 
-    return () => {
-      cancelAnimationFrame(animationRef.current);
-    };
+    return () => cancelAnimationFrame(animationRef.current);
   }, [automation, parameter, isAnimating]);
 
-  const handleCanvasClick = useCallback((e) => {
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const width = canvas.width;
-    const height = canvas.height;
+  // ✅ Add Automation Point on Click
+  const handleCanvasClick = useCallback(
+    (e) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const time = (x / width) * Tone.Transport.seconds;
-    const value = 1 - y / height; // Invert y-axis for proper scaling
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const width = canvas.width;
+      const height = canvas.height;
 
-    addAutomationPoint(parameter, time, value);
-  }, [addAutomationPoint, parameter]);
+      const time = (x / width) * Tone.Transport.seconds;
+      const value = 1 - y / height; // Invert Y-axis for scaling
+
+      addAutomationPoint(parameter, time, value);
+    },
+    [addAutomationPoint, parameter]
+  );
 
   return (
     <div className="automation">
@@ -76,12 +88,29 @@ const Automation = ({ parameter }) => {
         ref={canvasRef}
         width={600}
         height={120}
-        onClick={handleCanvasClick} // Click to add automation points
-        style={{ border: '1px solid #ccc', cursor: 'pointer' }}
+        onClick={handleCanvasClick} // ✅ Click to add automation points
+        style={{
+          border: "2px solid #555",
+          cursor: "pointer",
+          borderRadius: "8px",
+          background: "#222",
+        }}
       />
       <div>
-        <button onClick={() => setIsAnimating(!isAnimating)}>
-          {isAnimating ? '⏸ Pause' : '▶ Resume'}
+        <button
+          onClick={() => setIsAnimating(!isAnimating)}
+          style={{
+            marginTop: "10px",
+            padding: "8px 12px",
+            background: isAnimating ? "#d9534f" : "#5cb85c",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          {isAnimating ? "⏸ Pause" : "▶ Resume"}
         </button>
       </div>
     </div>
