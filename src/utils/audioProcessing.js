@@ -1,37 +1,40 @@
 import * as Tone from 'tone';
 
-// Function to normalize audio data
+// Normalize audio data efficiently
 export const normalizeAudio = (audioBuffer) => {
-  const data = audioBuffer.getChannelData(0);
-  const max = Math.max(...data);
-  const min = Math.min(...data);
+  const channelData = audioBuffer.getChannelData(0);
+  const max = Math.max(...channelData);
+  const min = Math.min(...channelData);
 
   if (max === min) {
-    console.warn('Audio data is constant; normalization will have no effect.');
+    console.warn('Audio data is constant; normalization skipped.');
     return audioBuffer;
   }
 
-  // Normalize the audio data
-  for (let i = 0; i < data.length; i++) {
-    data[i] = (data[i] - min) / (max - min);
+  const range = max - min;
+  const normalizedData = new Float32Array(channelData.length);
+  for (let i = 0; i < channelData.length; i++) {
+    normalizedData[i] = (channelData[i] - min) / range;
   }
-
-  return audioBuffer;
+  
+  const normalizedBuffer = Tone.context.createBuffer(1, channelData.length, audioBuffer.sampleRate);
+  normalizedBuffer.copyToChannel(normalizedData, 0);
+  return normalizedBuffer;
 };
 
-// Function to apply a low-pass filter to audio data
-export const applyLowPassFilter = async (audioBuffer, cutoffFrequency = 1000) => {
+// Apply a filter to audio data (Reusable Function)
+const applyFilter = async (audioBuffer, type, cutoffFrequency) => {
   const filter = new Tone.Filter({
-    type: 'lowpass',
+    type,
     frequency: cutoffFrequency,
-    Q: 1, // Quality factor for the filter
+    Q: 1,
   }).toDestination();
 
-  const offlineContext = new OfflineAudioContext({
-    numberOfChannels: audioBuffer.numberOfChannels,
-    length: audioBuffer.length,
-    sampleRate: audioBuffer.sampleRate,
-  });
+  const offlineContext = new OfflineAudioContext(
+    audioBuffer.numberOfChannels,
+    audioBuffer.length,
+    audioBuffer.sampleRate
+  );
 
   const source = offlineContext.createBufferSource();
   source.buffer = audioBuffer;
@@ -39,57 +42,43 @@ export const applyLowPassFilter = async (audioBuffer, cutoffFrequency = 1000) =>
   filter.connect(offlineContext.destination);
   source.start(0);
 
-  const renderedBuffer = await offlineContext.startRendering();
-  return renderedBuffer;
+  return await offlineContext.startRendering();
 };
 
-// Function to apply a high-pass filter to audio data
-export const applyHighPassFilter = async (audioBuffer, cutoffFrequency = 1000) => {
-  const filter = new Tone.Filter({
-    type: 'highpass',
-    frequency: cutoffFrequency,
-    Q: 1, // Quality factor for the filter
-  }).toDestination();
+export const applyLowPassFilter = (audioBuffer, cutoffFrequency = 1000) =>
+  applyFilter(audioBuffer, 'lowpass', cutoffFrequency);
 
-  const offlineContext = new OfflineAudioContext({
-    numberOfChannels: audioBuffer.numberOfChannels,
-    length: audioBuffer.length,
-    sampleRate: audioBuffer.sampleRate,
-  });
+export const applyHighPassFilter = (audioBuffer, cutoffFrequency = 1000) =>
+  applyFilter(audioBuffer, 'highpass', cutoffFrequency);
 
-  const source = offlineContext.createBufferSource();
-  source.buffer = audioBuffer;
-  source.connect(filter);
-  filter.connect(offlineContext.destination);
-  source.start(0);
-
-  const renderedBuffer = await offlineContext.startRendering();
-  return renderedBuffer;
-};
-
-// Function to reverse audio data
+// Reverse audio buffer efficiently
 export const reverseAudio = (audioBuffer) => {
-  const numberOfChannels = audioBuffer.numberOfChannels;
-  const reversedBuffer = Tone.context.createBuffer(numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
+  const reversedBuffer = Tone.context.createBuffer(
+    audioBuffer.numberOfChannels,
+    audioBuffer.length,
+    audioBuffer.sampleRate
+  );
 
-  for (let channel = 0; channel < numberOfChannels; channel++) {
+  for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
     const data = audioBuffer.getChannelData(channel);
-    const reversedData = reversedBuffer.getChannelData(channel);
-    for (let i = 0; i < data.length; i++) {
-      reversedData[i] = data[data.length - 1 - i];
+    const reversedData = new Float32Array(data.length);
+    for (let i = 0, len = data.length; i < len; i++) {
+      reversedData[i] = data[len - 1 - i];
     }
+    reversedBuffer.copyToChannel(reversedData, channel);
   }
 
   return reversedBuffer;
 };
 
-// Function to change the playback rate of audio data
+// Change playback rate without distorting pitch
 export const changePlaybackRate = async (audioBuffer, playbackRate = 1.0) => {
-  const offlineContext = new OfflineAudioContext({
-    numberOfChannels: audioBuffer.numberOfChannels,
-    length: Math.floor(audioBuffer.length / playbackRate),
-    sampleRate: audioBuffer.sampleRate,
-  });
+  const newLength = Math.floor(audioBuffer.length / playbackRate);
+  const offlineContext = new OfflineAudioContext(
+    audioBuffer.numberOfChannels,
+    newLength,
+    audioBuffer.sampleRate
+  );
 
   const source = offlineContext.createBufferSource();
   source.buffer = audioBuffer;
@@ -97,6 +86,5 @@ export const changePlaybackRate = async (audioBuffer, playbackRate = 1.0) => {
   source.connect(offlineContext.destination);
   source.start(0);
 
-  const renderedBuffer = await offlineContext.startRendering();
-  return renderedBuffer;
+  return await offlineContext.startRendering();
 };
