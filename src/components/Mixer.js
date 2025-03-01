@@ -10,51 +10,65 @@ const Mixer = ({ tracks }) => {
     delay: false,
   });
 
-  // Ensure audio context starts on user interaction
-  const startAudioContext = async () => {
-    if (Tone.context.state !== 'running') {
-      await Tone.start();
-      console.log('Audio context started');
-    }
-  };
-
-  // Use refs to persist effects across renders
   const reverbRef = useRef(null);
   const delayRef = useRef(null);
+  const gainRef = useRef(null);
 
   useEffect(() => {
-    reverbRef.current = new Tone.Reverb().toDestination();
-    delayRef.current = new Tone.FeedbackDelay().toDestination();
-
-    return () => {
-      if (reverbRef.current) {
-        reverbRef.current.disconnect();
-        reverbRef.current.dispose();
-      }
-      if (delayRef.current) {
-        delayRef.current.disconnect();
-        delayRef.current.dispose();
-      }
-    };
+    if (Tone.context.state !== 'running') {
+      Tone.start().catch((err) => console.error('🚨 Failed to start AudioContext:', err));
+    }
   }, []);
 
+  useEffect(() => {
+    const initializeAudio = async () => {
+      if (Tone.context.state !== 'running') {
+        console.warn('⚠️ AudioContext is not ready. Skipping mixer setup.');
+        return;
+      }
+
+      try {
+        gainRef.current = new Tone.Gain(0.8).toDestination();
+        reverbRef.current = new Tone.Reverb({ decay: 3, wet: sendLevel }).connect(gainRef.current);
+        delayRef.current = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.5, wet: sendLevel }).connect(gainRef.current);
+
+        console.log('✅ Mixer initialized successfully');
+      } catch (error) {
+        console.error('🚨 Error setting up Mixer:', error);
+      }
+    };
+
+    initializeAudio();
+
+    return () => {
+      console.log('🛑 Cleaning up Mixer effects...');
+      [reverbRef, delayRef, gainRef].forEach((ref) => {
+        if (ref.current) {
+          ref.current.disconnect();
+          ref.current.dispose();
+          ref.current = null;
+        }
+      });
+    };
+  }, [sendLevel]);
+
   const applySendEffect = (track) => {
-    if (!track?.synth) {
-      console.warn('Skipping effect application: Synth not initialized for track', track);
+    if (!track?.synth || Tone.context.state !== 'running') {
+      console.warn('⚠️ Skipping effect application: AudioContext not running or Synth not initialized');
       return;
     }
 
     const reverb = reverbRef.current;
     const delay = delayRef.current;
 
-    if (!effectsBypassed.reverb && reverb) {
+    if (reverb && !effectsBypassed.reverb) {
       track.synth.connect(reverb);
       reverb.wet.value = sendLevel;
     } else {
       track.synth.disconnect(reverb);
     }
 
-    if (!effectsBypassed.delay && delay) {
+    if (delay && !effectsBypassed.delay) {
       track.synth.connect(delay);
       delay.wet.value = sendLevel;
     } else {
@@ -71,7 +85,7 @@ const Mixer = ({ tracks }) => {
 
   return (
     <div className="mixer">
-      <button onClick={startAudioContext}>Start Audio</button>
+      <button onClick={() => Tone.start()}>🎵 Start Audio</button>
 
       <div className="master-controls">
         <h4>Master Volume</h4>
@@ -84,7 +98,9 @@ const Mixer = ({ tracks }) => {
           onChange={(e) => {
             const volume = parseFloat(e.target.value);
             setMasterVolume(volume);
-            Tone.Destination.volume.value = Tone.gainToDb(volume);
+            if (Tone.context.state === 'running') {
+              Tone.Destination.volume.value = Tone.gainToDb(volume);
+            }
           }}
         />
       </div>
