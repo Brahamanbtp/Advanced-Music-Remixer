@@ -1,18 +1,28 @@
-/* Next-Level App.css with Advanced UI, Glassmorphism & AI Theming */
+/* 🚀 Ultra-Advanced App.css - AI-Enhanced, Glassmorphic, and Hyper-Responsive */
 
-/* 🌍 Global Styles */
+/* 🌍 Global Variables & Theme Configurations */
 :root {
   --primary-color: #007bff;
   --secondary-color: #6c757d;
   --background-color: #121212;
   --text-color: #e0e0e0;
   --accent-color: #ff4081;
-  --border-radius: 16px;
-  --transition-duration: 0.3s;
-  --box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-  --glass-blur: 12px;
+  --border-radius: 18px;
+  --transition-duration: 0.25s;
+  --box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  --glass-blur: 18px;
 }
 
+/* 🌗 Adaptive Dark/Light Mode */
+@media (prefers-color-scheme: light) {
+  :root {
+    --background-color: #ffffff;
+    --text-color: #333;
+    --glass-blur: 10px;
+  }
+}
+
+/* 📦 Universal Styles */
 body {
   background-color: var(--background-color);
   color: var(--text-color);
@@ -35,198 +45,86 @@ body {
   justify-content: center;
   width: 100%;
   max-width: 1400px;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   transition: all var(--transition-duration) ease-in-out;
 }
 
-/* ✨ Header Styles */
-.App-header {
-  text-align: center;
-  margin-bottom: 24px;
-  animation: fadeIn 1s ease-in-out;
-}
-
-.App-header h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-  color: var(--accent-color);
-}
-
-/* 🎛️ Transport Controls */
-.transport-controls {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.transport-controls button, .transport-controls input {
-  padding: 12px;
+/* 🎚️ Glassmorphic Controls */
+button, input, select {
+  padding: 14px;
   border: none;
   border-radius: var(--border-radius);
-  background-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-color);
   cursor: pointer;
   transition: background var(--transition-duration) ease, transform var(--transition-duration) ease;
 }
 
-.transport-controls button:hover, .transport-controls input:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-3px) scale(1.05);
+button:hover, input:hover, select:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
 }
 
-.position-display {
-  margin-top: 10px;
-  font-size: 1.2em;
-  color: var(--accent-color);
+button:focus, input:focus, select:focus {
+  outline: 3px solid var(--accent-color);
+  outline-offset: 4px;
 }
 
-/* 🎵 Track Controls */
-.track-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-.track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--border-radius);
-  padding: 24px;
-  transition: background var(--transition-duration) ease, transform var(--transition-duration) ease;
-}
-
-.track:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-5px) scale(1.02);
-}
-
-.track h2 {
-  margin-top: 0;
-  color: var(--accent-color);
-}
-
-.track label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--secondary-color);
-}
-
-.track input {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: var(--border-radius);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--text-color);
-  transition: background var(--transition-duration) ease;
-}
-
-/* 🎹 Piano Roll */
+/* 🎹 Advanced Piano Roll */
 .piano-roll {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 28px;
 }
 
 .piano-roll div {
   background: rgba(255, 255, 255, 0.1);
   border-radius: var(--border-radius);
-  padding: 12px;
+  padding: 14px;
   text-align: center;
   cursor: pointer;
   transition: background var(--transition-duration) ease, transform var(--transition-duration) ease;
 }
 
 .piano-roll div:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.08);
 }
 
-/* 📊 Visualizer */
-.visualizer {
-  margin-bottom: 24px;
-}
-
+/* 📊 Optimized Visualizer */
 .visualizer canvas {
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--border-radius);
 }
 
-/* 📈 Automation */
-.automation {
-  margin-bottom: 24px;
+/* 🌟 AI-Generated Theming */
+.ai-theme {
+  --primary-color: #ff6f61;
+  --secondary-color: #6b5b95;
+  --background-color: #1e1e2f;
+  --text-color: #f5f5f5;
 }
 
-.automation button {
-  padding: 12px;
-  border: none;
-  border-radius: var(--border-radius);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--text-color);
-  cursor: pointer;
-  transition: background var(--transition-duration) ease;
+/* 📱 Advanced Responsive Design */
+@media (max-width: 768px) {
+  .App {
+    padding: 20px;
+  }
+  .piano-roll {
+    grid-template-columns: repeat(6, 1fr);
+  }
 }
 
-.automation button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* ⚡ Footer & Additional Controls */
-.footer-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 24px;
-}
-
-.footer-controls button {
-  padding: 12px;
-  border: none;
-  border-radius: var(--border-radius);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--text-color);
-  cursor: pointer;
-  transition: background var(--transition-duration) ease;
-}
-
-.footer-controls button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* 🎭 UI Customization */
-.ui-customization {
-  margin-top: 24px;
-}
-
-.ui-customization label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--secondary-color);
-}
-
-.ui-customization select, .ui-customization input {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: var(--border-radius);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--text-color);
-  margin-bottom: 12px;
-  transition: background var(--transition-duration) ease;
-}
-
-/* 🌀 GPU-Optimized Animations */
-@keyframes fadeIn {
+/* 🌀 Optimized Animations */
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -235,21 +133,11 @@ body {
 }
 
 .fade-in {
-  animation: fadeIn 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  animation: fadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1);
   will-change: transform, opacity;
 }
 
-/* 📱 Responsive Enhancements */
-@media (max-width: 768px) {
-  .App {
-    padding: 16px;
-  }
-  .track-controls {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* 🎯 Accessibility - Reduce Motion */
+/* ⚡ Accessibility Enhancements */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -257,20 +145,6 @@ body {
   }
 }
 
-/* 🌟 AI-Inspired Theming */
-.ai-theme {
-  --primary-color: #ff6f61;
-  --secondary-color: #6b5b95;
-  --background-color: #1e1e2f;
-  --text-color: #f5f5f5;
-}
-
-/* 🌐 Internationalization & Localization */
-[lang="fr"] .App {
-  font-family: 'Roboto', sans-serif;
-}
-
-/* 🔍 High Contrast Mode */
 @media (prefers-contrast: high) {
   body {
     background-color: #000;
@@ -280,12 +154,4 @@ body {
     background: #fff;
     color: #000;
   }
-}
-
-/* 🔍 Highlight Focused Elements */
-button:focus,
-input:focus,
-select:focus {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
 }
