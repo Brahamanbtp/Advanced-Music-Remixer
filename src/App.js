@@ -18,7 +18,7 @@ const Collaboration = lazy(() => import('./components/Collaboration'));
 const Export = lazy(() => import('./components/Export'));
 const Customization = lazy(() => import('./components/Customization'));
 
-// Error Boundary for Handling Crashes
+// 🎛 Error Boundary for Handling Crashes
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -30,12 +30,12 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("Error caught in ErrorBoundary:", error, info);
+    console.error("❌ Error caught in ErrorBoundary:", error, info);
   }
 
   render() {
     if (this.state.hasError) {
-      return <h2>Something went wrong: {this.state.error?.message}</h2>;
+      return <h2>🚨 Something went wrong: {this.state.error?.message}</h2>;
     }
     return this.props.children;
   }
@@ -47,11 +47,20 @@ const App = () => {
 
   useEffect(() => {
     // Ensure Tone.js AudioContext is started
-    Tone.start();
+    const startAudio = async () => {
+      try {
+        await Tone.start();
+        console.log("🔊 Tone.js AudioContext started!");
+      } catch (error) {
+        console.error("🚨 Error starting Tone.js:", error);
+      }
+    };
+
+    startAudio();
 
     const loadAudio = async () => {
       try {
-        const url = '/audio/sample.mp3'; // ✅ Update this path if needed
+        const url = '/audio/sample.mp3'; // ✅ Update path if needed
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -60,7 +69,7 @@ const App = () => {
 
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("audio")) {
-          throw new Error("Fetched file is not an audio file.");
+          throw new Error("🚨 Fetched file is not an audio file.");
         }
 
         const arrayBuffer = await response.arrayBuffer();
@@ -69,15 +78,15 @@ const App = () => {
         audioCtx.decodeAudioData(
           arrayBuffer,
           (buffer) => {
-            console.log('Audio loaded successfully:', buffer);
+            console.log('✅ Audio loaded successfully:', buffer);
             setAudioBuffer(buffer);
           },
           (error) => {
-            console.error("Decoding failed:", error);
+            console.error("❌ Decoding failed:", error);
           }
         );
       } catch (error) {
-        console.error('Error loading audio:', error);
+        console.error('🚨 Error loading audio:', error);
       }
     };
 
@@ -94,8 +103,8 @@ const App = () => {
                 <header className="app-header">
                   <h1>🎵 Advanced Music Remixer</h1>
                 </header>
-                
-                <Suspense fallback={<p>Loading...</p>}>
+
+                <Suspense fallback={<p>⏳ Loading...</p>}>
                   <MainContent audioBuffer={audioBuffer} />
                 </Suspense>
               </div>
@@ -117,10 +126,14 @@ const MainContent = ({ audioBuffer }) => {
         <TransportControls />
         <button onClick={addTrack} className="add-track-btn">➕ Add Track</button>
         <Mixer tracks={tracks} />
-        
-        {tracks.map((track, index) => (
-          <TrackControls key={index} index={index} track={track} removeTrack={removeTrack} />
-        ))}
+
+        {tracks.length > 0 ? (
+          tracks.map((track, index) => (
+            <TrackControls key={index} index={index} track={track} removeTrack={removeTrack} />
+          ))
+        ) : (
+          <p className="no-tracks">⚠️ No tracks added yet!</p>
+        )}
 
         <Visualizer audioBuffer={audioBuffer} />
         <Automation parameter="filterFrequency" />
@@ -146,4 +159,3 @@ const TrackControls = ({ index, track, removeTrack }) => (
 );
 
 export default App;
-
