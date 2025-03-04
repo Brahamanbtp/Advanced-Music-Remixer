@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy, useState } from 'react';
+import React, { useEffect, Suspense, lazy, useState, memo } from 'react';
 import * as Tone from 'tone';
 import { AudioProvider } from './contexts/AudioContext';
 import { ProjectProvider } from './contexts/ProjectContext';
@@ -18,7 +18,7 @@ const Collaboration = lazy(() => import('./components/Collaboration'));
 const Export = lazy(() => import('./components/Export'));
 const Customization = lazy(() => import('./components/Customization'));
 
-// 🎛 Error Boundary for Handling Crashes
+// Enhanced Error Boundary for Better User Experience
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -33,15 +33,24 @@ class ErrorBoundary extends React.Component {
     console.error("❌ Error caught in ErrorBoundary:", error, info);
   }
 
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
   render() {
     if (this.state.hasError) {
-      return <h2>🚨 Something went wrong: {this.state.error?.message}</h2>;
+      return (
+        <div className="error-container">
+          <h2>🚨 Something went wrong: {this.state.error?.message}</h2>
+          <button onClick={this.handleRetry} className="retry-button">🔄 Retry</button>
+        </div>
+      );
     }
     return this.props.children;
   }
 }
 
-// 🎼 Main App Component
+// Main App Component
 const App = () => {
   const [audioBuffer, setAudioBuffer] = useState(null);
 
@@ -60,7 +69,7 @@ const App = () => {
 
     const loadAudio = async () => {
       try {
-        const url = '/audio/sample.mp3'; // ✅ Update path if needed
+        const url = '/audio/sample.mp3';
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -104,7 +113,7 @@ const App = () => {
                   <h1>🎵 Advanced Music Remixer</h1>
                 </header>
 
-                <Suspense fallback={<p>⏳ Loading...</p>}>
+                <Suspense fallback={<p className="loading">⏳ Loading...</p>}>
                   <MainContent audioBuffer={audioBuffer} />
                 </Suspense>
               </div>
@@ -116,16 +125,16 @@ const App = () => {
   );
 };
 
-// 🎛 MainContent Component - Organized Logic
+// MainContent Component - Organized Logic
 const MainContent = ({ audioBuffer }) => {
-  const { tracks, setTracks, addTrack, removeTrack } = useTrack();
+  const { tracks, addTrack, removeTrack } = useTrack();
 
   return (
     <main>
       <section className="controls">
         <TransportControls />
         <button onClick={addTrack} className="add-track-btn">➕ Add Track</button>
-        <Mixer tracks={tracks} setTracks={setTracks} />
+        <Mixer tracks={tracks} />
 
         {tracks.length > 0 ? (
           tracks.map((track, index) => (
@@ -145,8 +154,8 @@ const MainContent = ({ audioBuffer }) => {
   );
 };
 
-// 🎚 Track Controls Component
-const TrackControls = ({ index, track, removeTrack }) => (
+// Optimized Track Controls Component
+const TrackControls = memo(({ index, track, removeTrack }) => (
   <div className="track-controls">
     <h2>{track.name}</h2>
     <Sequencer synth={track.synth} />
@@ -156,6 +165,6 @@ const TrackControls = ({ index, track, removeTrack }) => (
     ))}
     <button onClick={() => removeTrack(index)} className="remove-track-btn">❌ Remove Track</button>
   </div>
-);
+));
 
 export default App;
