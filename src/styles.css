@@ -1,6 +1,6 @@
-/* 🌐 Next-Level styles.css - Enhanced UI, Glassmorphism & AI Theming */
+/* 🌐 Ultra-Advanced styles.css - AI-Powered UI, Glassmorphism & Adaptive Theming */
 
-/* 🚀 Global Reset & Variables */
+/* 🚀 Global Reset & Next-Gen Variables */
 * {
   margin: 0;
   padding: 0;
@@ -10,7 +10,7 @@
 
 :root {
   --bg-color: #121212;
-  --card-bg: rgba(255, 255, 255, 0.1);
+  --card-bg: rgba(255, 255, 255, 0.08);
   --border-color: rgba(255, 255, 255, 0.2);
   --text-color: #f5f5f5;
   --primary-color: #4A90E2;
@@ -18,11 +18,20 @@
   --accent-color: #ff4081;
   --transition-duration: 0.3s;
   --border-radius: 16px;
-  --box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  --box-shadow: 0 14px 28px rgba(0, 0, 0, 0.4);
   --glass-blur: 20px;
 }
 
-/* 🎨 Body Styling */
+/* 🌗 Adaptive Light & Dark Mode */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-color: #ffffff;
+    --text-color: #222;
+    --card-bg: rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* 🎨 Core Body Styling */
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -33,7 +42,7 @@ body {
   transition: background var(--transition-duration) ease-in-out;
 }
 
-/* 📦 Main App Container */
+/* 📦 Glassmorphic App Container */
 .app {
   width: 100%;
   max-width: 1200px;
@@ -45,7 +54,7 @@ body {
   transition: all var(--transition-duration) ease-in-out;
 }
 
-/* 🎭 Header Styling */
+/* 🎭 AI-Enhanced Header */
 .app-header {
   text-align: center;
   margin-bottom: 24px;
@@ -55,34 +64,11 @@ body {
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--primary-color);
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4);
   animation: fadeIn 1s ease-in-out;
 }
 
-/* 🔧 Controls Section */
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-/* 🛠️ Individual Component Styling */
-.component {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  padding: 20px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-  transition: transform var(--transition-duration) ease, background var(--transition-duration) ease;
-}
-
-.component:hover {
-  transform: translateY(-5px) scale(1.02);
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* 🎮 Buttons */
+/* 🎚️ Interactive Buttons */
 button {
   background-color: var(--primary-color);
   color: var(--text-color);
@@ -96,15 +82,15 @@ button {
 
 button:hover {
   background-color: var(--hover-color);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-4px) scale(1.06);
 }
 
 button:focus {
-  outline: 2px solid var(--accent-color);
+  outline: 3px solid var(--accent-color);
   outline-offset: 4px;
 }
 
-/* 📩 Inputs */
+/* 📩 Advanced Input Fields */
 input[type="text"],
 input[type="number"],
 select {
@@ -118,15 +104,14 @@ select {
   transition: background var(--transition-duration) ease;
 }
 
-input[type="text"]:focus,
-input[type="number"]:focus,
+input:focus,
 select:focus {
-  background-color: rgba(255, 255, 255, 0.2);
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
+  background-color: rgba(255, 255, 255, 0.15);
+  outline: 3px solid var(--accent-color);
+  outline-offset: 3px;
 }
 
-/* 📱 Responsive Design */
+/* 📱 Responsive Enhancements */
 @media (max-width: 768px) {
   .controls {
     flex-direction: column;
@@ -151,7 +136,7 @@ select:focus {
   will-change: transform, opacity;
 }
 
-/* 🎯 Accessibility - Reduce Motion */
+/* 🦾 Accessibility & High Contrast Mode */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -159,21 +144,6 @@ select:focus {
   }
 }
 
-/* 🌟 AI-Inspired Theming */
-.ai-theme {
-  --primary-color: #ff6f61;
-  --hover-color: #ff9f80;
-  --accent-color: #6b5b95;
-  --bg-color: #1e1e2f;
-  --text-color: #f5f5f5;
-}
-
-/* 🌐 Internationalization & Localization */
-[lang="fr"] .app {
-  font-family: 'Roboto', sans-serif;
-}
-
-/* 🔍 High Contrast Mode */
 @media (prefers-contrast: high) {
   body {
     background-color: #000;
@@ -183,4 +153,12 @@ select:focus {
     background: #fff;
     color: #000;
   }
+}
+
+/* 🔍 Enhanced Focus Visibility */
+button:focus,
+input:focus,
+select:focus {
+  outline: 3px solid var(--accent-color);
+  outline-offset: 3px;
 }
