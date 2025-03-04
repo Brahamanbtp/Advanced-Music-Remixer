@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import Effect from './Effect';
 
-const Mixer = ({ tracks }) => {
+const Mixer = ({ tracks, setTracks }) => {
   const [masterVolume, setMasterVolume] = useState(1);
   const [sendLevel, setSendLevel] = useState(0);
   const [effectsBypassed, setEffectsBypassed] = useState({
@@ -83,6 +83,10 @@ const Mixer = ({ tracks }) => {
     }));
   };
 
+  const removeTrack = (trackIndex) => {
+    setTracks((prevTracks) => prevTracks.filter((_, index) => index !== trackIndex));
+  };
+
   return (
     <div className="mixer">
       <button onClick={() => Tone.start()}>🎵 Start Audio</button>
@@ -153,6 +157,8 @@ const Mixer = ({ tracks }) => {
               </button>
             ))}
           </div>
+
+          <button onClick={() => removeTrack(index)}>❌ Remove Track</button>
         </div>
       ))}
     </div>
