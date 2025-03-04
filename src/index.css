@@ -1,4 +1,4 @@
-/* 🎨 Next-Level index.css with Advanced UI Enhancements, Performance Optimizations & AI Theming */
+/* 🚀 Next-Gen index.css - AI-Enhanced, Performance-Optimized, and Ultra-Responsive */
 
 /* 🌍 Global Reset & Root Variables */
 :root {
@@ -10,6 +10,8 @@
   --border-radius: 12px;
   --transition-duration: 0.3s;
   --box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-blur: 15px;
 }
 
 * {
@@ -21,7 +23,16 @@
   scroll-behavior: smooth;
 }
 
-/* 🌑 Dark Mode & Adaptive Themes */
+/* 🌗 Auto Dark Mode Detection */
+@media (prefers-color-scheme: light) {
+  :root {
+    --background-color: #ffffff;
+    --text-color: #333;
+    --glass-bg: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 📦 Universal Container */
 body {
   background-color: var(--background-color);
   color: var(--text-color);
@@ -34,36 +45,19 @@ body {
   transition: background-color var(--transition-duration) ease-in-out;
 }
 
-/* 🚀 Advanced Layout & Grid System */
+/* 🎛️ Glassmorphic App Container */
 .app {
   width: 100%;
   max-width: 1400px;
   padding: 24px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   transition: all var(--transition-duration) ease-in-out;
 }
 
-/* 🖥️ Responsive Grid for Components */
-main {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  width: 100%;
-  padding: 20px;
-}
-
-/* 🎛️ Interactive Controls */
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-  padding: 20px;
-}
-
+/* 🎚️ Dynamic Controls */
 button {
   background: var(--primary-color);
   color: white;
@@ -85,17 +79,16 @@ button:focus {
   outline-offset: 4px;
 }
 
-/* 🎹 Piano Roll Enhancements */
+/* 🎹 Interactive Piano Roll */
 .piano-roll {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 8px;
-  margin-bottom: 24px;
   padding: 20px;
 }
 
 .piano-roll div {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
   border-radius: var(--border-radius);
   padding: 12px;
   text-align: center;
@@ -108,7 +101,15 @@ button:focus {
   transform: scale(1.05);
 }
 
-/* 📱 Responsive Design */
+/* 🎨 AI-Driven Dynamic Themes */
+.ai-theme {
+  --primary-color: #ff6f61;
+  --secondary-color: #6b5b95;
+  --background-color: #1e1e2f;
+  --text-color: #f5f5f5;
+}
+
+/* 📱 Advanced Responsive Design */
 @media (max-width: 768px) {
   .app {
     padding: 16px;
@@ -118,7 +119,7 @@ button:focus {
   }
 }
 
-/* 🌀 GPU-Optimized Animations */
+/* 🎬 GPU-Accelerated Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -135,7 +136,7 @@ button:focus {
   will-change: transform, opacity;
 }
 
-/* 🎯 Accessibility - Reduce Motion */
+/* 🦾 Accessibility Enhancements */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -143,20 +144,6 @@ button:focus {
   }
 }
 
-/* 🌟 AI-Inspired Theming */
-.ai-theme {
-  --primary-color: #ff6f61;
-  --secondary-color: #6b5b95;
-  --background-color: #1e1e2f;
-  --text-color: #f5f5f5;
-}
-
-/* 🌐 Internationalization & Localization */
-[lang="fr"] .app {
-  font-family: 'Roboto', sans-serif;
-}
-
-/* 🔍 High Contrast Mode */
 @media (prefers-contrast: high) {
   body {
     background-color: #000;
@@ -168,7 +155,7 @@ button:focus {
   }
 }
 
-/* 🔍 Highlight Focused Elements */
+/* 🔍 Improved Focus Visibility */
 button:focus,
 input:focus,
 select:focus {
